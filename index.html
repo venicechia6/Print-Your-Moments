@@ -42,11 +42,13 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 @media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:40px}.hero h1{font-size:40px}.hero-card{height:300px}.products{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}}
 @media(max-width:480px){.products{grid-template-columns:1fr}.hero-card{height:260px}.photo{min-height:100px}}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;align-items:center;justify-content:center;padding:18px}
-.modal.show{display:flex}.modalbox{background:#fff;max-width:600px;width:100%;max-height:90vh;overflow:auto;border-radius:22px;padding:25px}
+.modal.show{display:flex}.modalbox{background:#fff;max-width:850px;width:100%;max-height:90vh;overflow:auto;border-radius:22px;padding:25px}
 .close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}
 .ordercode{background:#f6f2ff;border-radius:12px;padding:14px;margin:15px 0;font-weight:800;text-align:center}
 .status{display:inline-block;padding:6px 10px;border-radius:20px;background:#fff3cd;font-size:12px}
-.admin{margin-top:18px;overflow:auto}.admin table{width:100%;border-collapse:collapse;font-size:13px}.admin th,.admin td{padding:10px;border-bottom:1px solid #eee;text-align:left}
+.admin{margin-top:18px;overflow:auto}.admin table{width:100%;border-collapse:collapse;font-size:13px}.admin th,.admin td{padding:10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
+.address-box{background:#f9f9fb;padding:8px;border-radius:8px;border:1px solid #eee;margin-top:4px;font-size:12px;line-height:1.4}
+.copy-btn{font-size:11px;padding:3px 8px;margin-top:5px;cursor:pointer;border-radius:4px;border:1px solid #ccc;background:#fff}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#202024;color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:120}
 .qr-container{text-align:center;margin:15px 0;background:#fbf9ff;padding:15px;border-radius:12px;border:1px dashed #8b5cf6}
 .qr-img{width:220px;height:220px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd;object-fit:contain}
@@ -86,7 +88,7 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <label>Photo Size</label>
 <select id="size" onchange="update()"><option value="4R">4R — RM0.50 / pcs</option><option value="5R">5R — RM1.00 / pcs</option><option value="6R">6R — RM2.00 / pcs</option><option value="Photo Strip">Photo Strip — RM1.50 / pcs</option></select>
 <label>Paper Type</label>
-<select><option>Glossy — 亮面</option><option>Matte — 哑面</option></select>
+<select id="paper"><option value="Glossy (亮面)">Glossy — 亮面</option><option value="Matte (哑面)">Matte — 哑面</option></select>
 <label>Upload Photos</label>
 <div class="upload" onclick="document.getElementById('files').click()">
 <strong>＋ Add Photos</strong><span>从手机选择照片，可一次上传多张</span>
@@ -95,9 +97,9 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <div class="preview" id="preview"></div>
 </div>
 <div>
-<label>Your Name</label><input placeholder="Nama anda">
-<label>WhatsApp Number</label><input placeholder="01X-XXXXXXX">
-<label>Delivery Address</label><input placeholder="Alamat penghantaran">
+<label>Your Name</label><input id="custName" placeholder="Nama anda">
+<label>WhatsApp Number</label><input id="custPhone" placeholder="01X-XXXXXXX">
+<label>Delivery Address</label><input id="custAddress" placeholder="Alamat penghantaran penuh">
 <label>Shipping Option (Courier Service)</label>
 <select id="shipping" onchange="update()">
   <option value="8.00">GDEX Express (Semenanjung) — RM8.00</option>
@@ -146,7 +148,7 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 
 <div class="modal" id="adminModal"><div class="modalbox">
 <button class="close" onclick="document.getElementById('adminModal').classList.remove('show')">×</button>
-<h2>订单管理后台 (云端同步)</h2><p style="color:#777;margin:7px 0 15px">实时读取 Supabase 云数据库订单信息。</p>
+<h2>订单管理后台 (云端同步)</h2><p style="color:#777;margin:7px 0 15px">查看完整邮寄地址及云端专属文件夹。</p>
 <div class="admin" id="adminBody"></div></div></div>
 
 <div class="toast" id="toast"></div>
@@ -223,10 +225,9 @@ async function placeOrder() {
     return;
   }
 
-  var ins = document.querySelectorAll('#order input');
-  var name = ins[0].value.trim();
-  var phone = ins[1].value.trim();
-  var address = ins[2].value.trim();
+  var name = document.getElementById('custName').value.trim();
+  var phone = document.getElementById('custPhone').value.trim();
+  var address = document.getElementById('custAddress').value.trim();
 
   if (!name || !phone || !address) {
     showToast('请填写姓名、WhatsApp 和地址');
@@ -237,11 +238,13 @@ async function placeOrder() {
 
   try {
     var orderId = 'PYM' + String(Date.now()).slice(-6);
+    var cleanName = name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_');
+    var folderPath = cleanName + '_' + orderId;
     var uploadedUrls = [];
 
     for (var i = 0; i < fileInput.files.length; i++) {
       var file = fileInput.files[i];
-      var fileName = orderId + '_' + Date.now() + '_' + file.name;
+      var fileName = folderPath + '/photo_' + (i + 1) + '_' + Date.now() + '.jpg';
       var res = await client.storage.from(BUCKET_NAME).upload(fileName, file);
       if (res.error) throw res.error;
 
@@ -249,13 +252,16 @@ async function placeOrder() {
       uploadedUrls.push(pubRes.data.publicUrl);
     }
 
+    var shipSelect = document.getElementById('shipping');
+    var shipText = shipSelect.options[shipSelect.selectedIndex].text;
+
     var orderRes = await client.from('orders').insert([{
       id: orderId,
       customer_name: name,
       whatsapp: phone,
-      address: address,
+      address: address + ' [' + shipText + ']',
       photo_size: document.getElementById('size').value,
-      paper_type: document.querySelectorAll('#order select')[1].value,
+      paper_type: document.getElementById('paper').value,
       total_amount: totalAmount(),
       status: '待付款'
     }]);
@@ -272,7 +278,7 @@ async function placeOrder() {
 
     document.getElementById('orderCode').textContent = 'ORDER ID: ' + orderId;
     document.getElementById('orderSummary').innerHTML = 
-      '规格: <b>' + document.getElementById('size').value + '</b> × ' + count + ' pcs<br>' +
+      '规格: <b>' + document.getElementById('size').value + ' (' + document.getElementById('paper').value + ')</b> × ' + count + ' pcs<br>' +
       '<strong>Jumlah Perlu Dibayar: RM' + totalAmount().toFixed(2) + '</strong>';
     document.getElementById('successModal').classList.add('show');
 
@@ -291,7 +297,10 @@ async function uploadProof() {
 
   try {
     showToast('正在上传凭证...');
-    var fileName = 'proof_' + window.currentOrderId + '_' + Date.now() + '_' + f.name;
+    var name = document.getElementById('custName').value.trim();
+    var cleanName = name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_');
+    var fileName = cleanName + '_' + window.currentOrderId + '/receipt_' + Date.now() + '.jpg';
+    
     var res = await client.storage.from(BUCKET_NAME).upload(fileName, f);
     if (res.error) throw res.error;
 
@@ -312,6 +321,12 @@ async function uploadProof() {
 function openAdmin() {
   document.getElementById('adminModal').classList.add('show');
   renderAdmin();
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(function() {
+    showToast('已复制到剪贴板！');
+  });
 }
 
 async function renderAdmin() {
@@ -337,10 +352,12 @@ async function renderAdmin() {
   var orders = res.data;
   var rows = orders.map(function(o) {
     var photosHtml = o.order_photos ? o.order_photos.map(function(p, idx) {
-      return '<a href="' + p.photo_url + '" target="_blank" style="color:#8b5cf6">照片' + (idx + 1) + '</a>';
-    }).join(' ') : '无照片';
+      return '<a href="' + p.photo_url + '" target="_blank" style="color:#8b5cf6;display:inline-block;margin-right:5px">📷 照片' + (idx + 1) + '</a>';
+    }).join('') : '无照片';
 
-    var proofHtml = o.payment_proof ? '<br><a href="' + o.payment_proof + '" target="_blank" style="color:green;font-weight:bold">查看凭证</a>' : '';
+    var proofHtml = o.payment_proof ? '<br><a href="' + o.payment_proof + '" target="_blank" style="color:green;font-weight:bold;display:inline-block;margin-top:5px">🧾 查看付款凭证</a>' : '';
+
+    var addressInfo = "姓名: " + o.customer_name + "\n电话: " + o.whatsapp + "\n地址: " + o.address;
 
     var statuses = ['待付款','付款审核中','已付款','打印中','已包装','已发货','已取消'];
     var optionsHtml = statuses.map(function(s) {
@@ -348,17 +365,21 @@ async function renderAdmin() {
     }).join('');
 
     return '<tr>' +
-      '<td><b>' + o.id + '</b><br><small>' + new Date(o.created_at).toLocaleString() + '</small></td>' +
-      '<td>' + o.customer_name + '<br>' + o.whatsapp + '<br><small>' + o.address + '</small></td>' +
-      '<td>' + o.photo_size + '<br>' + o.paper_type + '</td>' +
-      '<td>RM' + parseFloat(o.total_amount).toFixed(2) + '</td>' +
+      '<td><b>' + o.id + '</b><br><small style="color:#888">' + new Date(o.created_at).toLocaleString() + '</small></td>' +
+      '<td style="min-width:200px">' +
+        '<b>' + o.customer_name + '</b> (' + o.whatsapp + ')' +
+        '<div class="address-box">' + o.address + '</div>' +
+        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 复制完整邮寄资料</button>' +
+      '</td>' +
+      '<td><b>' + o.photo_size + '</b><br><small>' + (o.paper_type || 'Glossy') + '</small></td>' +
+      '<td><b>RM' + parseFloat(o.total_amount).toFixed(2) + '</b></td>' +
       '<td><span class="status">' + o.status + '</span></td>' +
-      '<td>' + photosHtml + ' ' + proofHtml + '</td>' +
+      '<td>' + photosHtml + proofHtml + '</td>' +
       '<td><select onchange="setStatus(\'' + o.id + '\', this.value)">' + optionsHtml + '</select></td>' +
     '</tr>';
   }).join('');
 
-  b.innerHTML = '<table><tr><th>订单号</th><th>顾客信息</th><th>规格</th><th>金额</th><th>状态</th><th>照片/凭证</th><th>操作</th></tr>' + rows + '</table>';
+  b.innerHTML = '<table><tr><th>订单号</th><th>顾客及邮寄资料</th><th>规格</th><th>总额</th><th>状态</th><th>云端照片/凭证</th><th>操作</th></tr>' + rows + '</table>';
 }
 
 async function setStatus(orderId, newStatus) {
