@@ -42,9 +42,13 @@ select,input{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;ba
 .btn-del-item{background:#ff4d4f;color:#fff;border:0;width:30px;height:30px;border-radius:6px;cursor:pointer;font-weight:bold}
 .btn-add-item{background:#8b5cf6;color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:13px;margin-top:5px;display:inline-block}
 
-.upload{border:2px dashed #cfc7e9;border-radius:15px;padding:24px;text-align:center;background:#fbf9ff;cursor:pointer;margin-top:15px}
-.upload input{display:none}.upload strong{display:block;margin-bottom:5px}.upload span{font-size:13px;color:#777}
-.preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.thumb{width:64px;height:64px;border-radius:8px;object-fit:cover}
+.upload{border:2px dashed #cfc7e9;border-radius:15px;padding:24px;text-align:center;background:#fbf9ff;cursor:pointer;margin-top:15px;transition:all 0.2s}
+.upload:hover{background:#f4efff;border-color:#8b5cf6}
+.upload input{display:none}.upload strong{display:block;margin-bottom:5px;color:#8b5cf6}.upload span{font-size:13px;color:#777}
+.preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.thumb-wrap{position:relative;display:inline-block}
+.thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid #ddd}
+
 .total{margin-top:20px;padding:18px;background:#f7f5fa;border-radius:12px}.row{display:flex;justify-content:space-between;margin:7px 0}.grand{font-size:20px;font-weight:800;padding-top:10px;border-top:1px solid #ddd}
 footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-top:30px}footer p{color:#aaa;font-size:13px;margin-top:7px}
 @media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:40px}.hero h1{font-size:40px}.hero-card{height:300px}.products{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}.item-row{grid-template-columns:1fr 1fr 1fr;gap:6px}}
@@ -101,9 +105,11 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
   <label style="margin-top:20px">Paper Type (相纸材质)</label>
   <select id="paper"><option value="Glossy (亮面)">Glossy — 亮面</option><option value="Matte (哑面)">Matte — 哑面</option></select>
 
-  <label>Upload Photos (上传对应照片)</label>
+  <!-- 顾客自主上传照片区 -->
+  <label style="margin-top:20px">Upload Photos (上传你的照片)</label>
   <div class="upload" onclick="document.getElementById('files').click()">
-    <strong>＋ Add Photos</strong><span>从手机选择照片，可一次上传多张</span>
+    <strong>📸 ＋ 选择并上传照片 / Upload Your Photos</strong>
+    <span>点击选择手机或电脑中的照片，支持一次多选</span>
     <input id="files" type="file" accept="image/*" multiple onchange="previewFiles(event)">
   </div>
   <div class="preview" id="preview"></div>
@@ -212,7 +218,7 @@ async function initPage() {
     if (res.data && res.data.length > 0) sizeList = res.data;
   }
   renderProductCards();
-  addItemRow('4R'); // 默认添加第一行
+  addItemRow('4R');
 }
 
 function renderProductCards() {
@@ -233,7 +239,6 @@ function chooseProduct(sizeName) {
   document.getElementById('order').scrollIntoView({behavior: 'smooth'});
 }
 
-/* 核心功能：自定义动态添加多行规格、价格、数量 */
 function addItemRow(defaultSize) {
   var container = document.getElementById('itemsContainer');
   var div = document.createElement('div');
@@ -307,16 +312,26 @@ function calculateGrandTotal() {
   return { totalQty: totalQty, photoTotal: totalPhotoPrice, grandTotal: totalPhotoPrice + ship };
 }
 
+/* 实时预览顾客上传的照片 */
 function previewFiles(e) {
   var box = document.getElementById('preview');
   box.innerHTML = '';
   countFiles = e.target.files.length;
+
+  if (countFiles === 0) return;
+
   Array.from(e.target.files).forEach(function(f) {
+    var wrap = document.createElement('div');
+    wrap.className = 'thumb-wrap';
+
     var img = document.createElement('img');
     img.className = 'thumb';
     img.src = URL.createObjectURL(f);
-    box.appendChild(img);
+    
+    wrap.appendChild(img);
+    box.appendChild(wrap);
   });
+  showToast('已加载 ' + countFiles + ' 张照片预览');
 }
 
 function showToast(t) {
@@ -330,7 +345,7 @@ function closeModal() {
   document.getElementById('successModal').classList.remove('show');
 }
 
-/* 下单逻辑整合多规格汇总 */
+/* 提交订单与照片到 Supabase */
 async function placeOrder() {
   if (isSubmittingOrder) return;
 
@@ -339,7 +354,7 @@ async function placeOrder() {
   var orderBtn = document.getElementById('orderBtn');
 
   if (!fileInput.files.length) {
-    showToast('请先上传照片 / Sila upload foto dahulu.');
+    showToast('请先选择并上传照片 / Sila upload foto dahulu.');
     return;
   }
 
@@ -352,7 +367,6 @@ async function placeOrder() {
     return;
   }
 
-  // 拼接所有的规格详情
   var itemRows = document.querySelectorAll('.item-row');
   var summaryList = [];
   itemRows.forEach(function(row) {
@@ -376,6 +390,7 @@ async function placeOrder() {
     var folderPath = cleanName + '_' + orderId;
     var uploadedUrls = [];
 
+    // 逐张上传照片到 Storage photos Bucket
     for (var i = 0; i < fileInput.files.length; i++) {
       var file = fileInput.files[i];
       var fileName = folderPath + '/photo_' + (i + 1) + '_' + Date.now() + '.jpg';
