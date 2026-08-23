@@ -49,6 +49,8 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 .admin{margin-top:18px;overflow:auto}.admin table{width:100%;border-collapse:collapse;font-size:13px}.admin th,.admin td{padding:10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
 .address-box{background:#f9f9fb;padding:8px;border-radius:8px;border:1px solid #eee;margin-top:4px;font-size:12px;line-height:1.4}
 .copy-btn{font-size:11px;padding:3px 8px;margin-top:5px;cursor:pointer;border-radius:4px;border:1px solid #ccc;background:#fff}
+.del-btn{font-size:11px;padding:4px 8px;margin-top:5px;cursor:pointer;border-radius:4px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-weight:bold}
+.del-btn:hover{background:#ef4444;color:#fff}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#202024;color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:120}
 .qr-container{text-align:center;margin:15px 0;background:#fbf9ff;padding:15px;border-radius:12px;border:1px dashed #8b5cf6}
 .qr-img{width:220px;height:220px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd;object-fit:contain}
@@ -225,7 +227,6 @@ async function placeOrder() {
     return;
   }
 
-  // 严格精确精准获取各个输入框的值
   var name = document.getElementById('custName').value.trim();
   var phone = document.getElementById('custPhone').value.trim();
   var address = document.getElementById('custAddress').value.trim();
@@ -331,6 +332,45 @@ function copyToClipboard(text) {
   });
 }
 
+async function editOrder(orderId, oldName, oldPhone, oldAddress) {
+  var newName = prompt('修改姓名：', oldName);
+  if (newName === null) return;
+  var newPhone = prompt('修改电话号码：', oldPhone);
+  if (newPhone === null) return;
+  var newAddress = prompt('修改地址：', oldAddress);
+  if (newAddress === null) return;
+
+  var client = getSupabase();
+  await client.from('orders').update({
+    customer_name: newName,
+    whatsapp: newPhone,
+    address: newAddress
+  }).eq('id', orderId);
+
+  showToast('资料已修改！');
+  renderAdmin();
+}
+
+// 专门删除订单的函数
+async function deleteOrder(orderId) {
+  if (!confirm('确定要删除订单 ' + orderId + ' 吗？删除后不可恢复！')) {
+    return;
+  }
+  var client = getSupabase();
+  
+  // 先删关联照片表
+  await client.from('order_photos').delete().eq('order_id', orderId);
+  // 再删主订单表
+  var res = await client.from('orders').delete().eq('id', orderId);
+  
+  if (res.error) {
+    alert('删除失败：' + res.error.message);
+  } else {
+    showToast('订单已成功删除！');
+    renderAdmin();
+  }
+}
+
 async function renderAdmin() {
   var client = getSupabase();
   var b = document.getElementById('adminBody');
@@ -372,13 +412,17 @@ async function renderAdmin() {
         '<b>姓名：</b>' + o.customer_name + '<br>' +
         '<b>电话：</b>' + o.whatsapp +
         '<div class="address-box"><b>地址：</b>' + o.address + '</div>' +
-        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 一键复制邮寄资料</button>' +
+        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 一键复制</button> ' +
+        '<button class="copy-btn" style="border-color:#8b5cf6;color:#8b5cf6" onclick="editOrder(\'' + o.id + '\', \'' + o.customer_name.replace(/'/g, "\\'") + '\', \'' + o.whatsapp.replace(/'/g, "\\'") + '\', \'' + o.address.replace(/'/g, "\\'") + '\')">✏️ 修改</button>' +
       '</td>' +
       '<td><b>' + o.photo_size + '</b><br><small>' + (o.paper_type || 'Glossy') + '</small></td>' +
       '<td><b>RM' + parseFloat(o.total_amount).toFixed(2) + '</b></td>' +
       '<td><span class="status">' + o.status + '</span></td>' +
       '<td>' + photosHtml + proofHtml + '</td>' +
-      '<td><select onchange="setStatus(\'' + o.id + '\', this.value)">' + optionsHtml + '</select></td>' +
+      '<td>' +
+        '<select onchange="setStatus(\'' + o.id + '\', this.value)">' + optionsHtml + '</select><br>' +
+        '<button class="del-btn" onclick="deleteOrder(\'' + o.id + '\')">🗑️ 删除订单</button>' +
+      '</td>' +
     '</tr>';
   }).join('');
 
@@ -387,6 +431,12 @@ async function renderAdmin() {
 
 async function setStatus(orderId, newStatus) {
   var client = getSupabase();
+  if (newStatus === '已取消') {
+    if (confirm('要把订单 ' + orderId + ' 设为已取消，并直接从数据库删除吗？')) {
+      deleteOrder(orderId);
+      return;
+    }
+  }
   await client.from('orders').update({ status: newStatus }).eq('id', orderId);
   showToast('状态更新成功');
   renderAdmin();
