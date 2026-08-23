@@ -20,12 +20,9 @@ nav{display:flex;gap:25px;font-size:14px;color:#666}
 .hero p{font-size:18px;color:#666;line-height:1.7;max-width:520px}
 .btn{display:inline-block;margin-top:20px;background:#202024;color:#fff;padding:14px 22px;border-radius:12px;font-weight:700;border:0;cursor:pointer;text-align:center}
 .btn:disabled{background:#ccc !important;cursor:not-allowed !important;opacity:0.6}
-.hero-card{height:370px;border-radius:28px;background:linear-gradient(135deg,#eee8ff,#fff);padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px;transform:rotate(1deg)}
-.photo{border-radius:18px;background-size:cover;background-position:center;min-height:145px;box-shadow:0 12px 25px #0001}
-.photo:nth-child(1){background-image:url("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=700&q=80")}
-.photo:nth-child(2){background-image:url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=80")}
-.photo:nth-child(3){background-image:url("https://images.unsplash.com/photo-1504150558240-0b4fd8946624?auto=format&fit=crop&w=700&q=80")}
-.photo:nth-child(4){background-image:url("https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=700&q=80")}
+.hero-card{display:flex;justify-content:center;align-items:center}
+.hero-card img{width:100%;max-width:550px;height:auto;border-radius:20px;box-shadow:0 12px 30px rgba(0,0,0,0.08);object-fit:contain;transition:transform 0.3s ease}
+.hero-card img:hover{transform:scale(1.01)}
 section{max-width:1180px;margin:auto;padding:45px 24px}
 .title{text-align:center;margin-bottom:30px}
 .title h2{font-size:32px;margin-bottom:8px}.title p{color:#777}
@@ -52,8 +49,8 @@ select,input{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;ba
 
 .total{margin-top:20px;padding:18px;background:#f7f5fa;border-radius:12px}.row{display:flex;justify-content:space-between;margin:7px 0}.grand{font-size:20px;font-weight:800;padding-top:10px;border-top:1px solid #ddd}
 footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-top:30px}footer p{color:#aaa;font-size:13px;margin-top:7px}
-@media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:40px}.hero h1{font-size:40px}.hero-card{height:300px}.products{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}.item-row{grid-template-columns:1fr 1fr 1fr;gap:6px}}
-@media(max-width:480px){.products{grid-template-columns:1fr}.hero-card{height:260px}.photo{min-height:100px}}
+@media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:40px}.hero h1{font-size:40px}.products{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}.item-row{grid-template-columns:1fr 1fr 1fr;gap:6px}}
+@media(max-width:480px){.products{grid-template-columns:1fr}}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;align-items:center;justify-content:center;padding:18px}
 .modal.show{display:flex}.modalbox{background:#fff;max-width:850px;width:100%;max-height:90vh;overflow:auto;border-radius:22px;padding:25px}
 .close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}
@@ -88,7 +85,9 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
     <p>Upload your favourite photos, choose your size and paper, then place your order. Simple, fast and made for your memories.</p>
     <a class="btn" href="#order">📷 Mula Cetak Sekarang</a>
   </div>
-  <div class="hero-card"><div class="photo"></div><div class="photo"></div><div class="photo"></div><div class="photo"></div></div>
+  <div class="hero-card">
+    <img src="https://exdvuezgterujdtqvqql.supabase.co/storage/v1/object/public/photos/7a9b2b7e-3133-467d-a41c-4e518b09b3de.png" alt="Print Your Moments Business Card">
+  </div>
 </section>
 
 <section id="products">
