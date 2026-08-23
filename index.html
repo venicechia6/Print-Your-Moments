@@ -59,8 +59,9 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 .status{display:inline-block;padding:6px 10px;border-radius:20px;background:#fff3cd;font-size:12px}
 .admin{margin-top:18px;overflow:auto}.admin table{width:100%;border-collapse:collapse;font-size:13px}.admin th,.admin td{padding:10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
 .address-box{background:#f9f9fb;padding:8px;border-radius:8px;border:1px solid #eee;margin-top:4px;font-size:12px;line-height:1.4}
-.copy-btn,.del-btn{font-size:11px;padding:4px 8px;margin-top:5px;cursor:pointer;border-radius:4px;border:1px solid #ccc;background:#fff}
-.del-btn{border-color:#ef4444;color:#ef4444;font-weight:bold}.del-btn:hover{background:#ef4444;color:#fff}
+.copy-btn,.del-btn,.edit-btn{font-size:11px;padding:4px 8px;margin-top:5px;cursor:pointer;border-radius:4px;border:1px solid #ccc;background:#fff;display:inline-block}
+.del-btn{border-color:#ef4444;color:#ef4444;font-weight:bold;margin-left:5px}.del-btn:hover{background:#ef4444;color:#fff}
+.edit-btn{border-color:#8b5cf6;color:#8b5cf6;font-weight:bold}.edit-btn:hover{background:#8b5cf6;color:#fff}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#202024;color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:120}
 .qr-container{text-align:center;margin:15px 0;background:#fbf9ff;padding:15px;border-radius:12px;border:1px dashed #8b5cf6}
 .qr-img{width:220px;height:220px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd;object-fit:contain}
@@ -168,7 +169,6 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
   <div class="admin" id="adminBody"></div>
 </div>
 
-<!-- 增加默认数量 input 字段 -->
 <div id="tabPricesView" style="display:none">
   <div class="price-edit-box">
     <h3>新增 / 修改预设规格</h3>
@@ -585,6 +585,16 @@ async function setStatus(orderId, newStatus) {
   renderAdmin();
 }
 
+function editSizeSetting(name, qty, price, desc, icon) {
+  document.getElementById('newSizeName').value = name;
+  document.getElementById('newSizeQty').value = qty;
+  document.getElementById('newSizePrice').value = price;
+  document.getElementById('newSizeDesc').value = desc || '';
+  document.getElementById('newSizeIcon').value = icon || '';
+  document.getElementById('newSizeName').focus();
+  showToast('已载入 ' + name + '，修改后点击保存即可');
+}
+
 async function saveSizeSetting() {
   var name = document.getElementById('newSizeName').value.trim();
   var qty = parseInt(document.getElementById('newSizeQty').value) || 1;
@@ -632,13 +642,20 @@ async function deleteSizeSetting(sizeName) {
 function renderPricesAdmin() {
   var b = document.getElementById('pricesBody');
   var rows = sizeList.map(function(s) {
+    var safeName = s.name.replace(/'/g, "\\'");
+    var safeDesc = (s.description || '').replace(/'/g, "\\'");
+    var safeIcon = (s.icon || '🖼️').replace(/'/g, "\\'");
+    var safeQty = s.default_qty || 1;
+    var safePrice = s.price;
+
     return '<tr>' +
       '<td>' + (s.icon || '🖼️') + ' <b>' + s.name + '</b></td>' +
-      '<td>' + (s.default_qty || 1) + ' 张</td>' +
+      '<td>' + safeQty + ' 张</td>' +
       '<td>RM ' + parseFloat(s.price).toFixed(2) + '</td>' +
       '<td>' + (s.description || '') + '</td>' +
       '<td>' +
-        '<button class="del-btn" onclick="deleteSizeSetting(\'' + s.name + '\')">🗑️ 删除</button>' +
+        '<button class="edit-btn" onclick="editSizeSetting(\'' + safeName + '\', ' + safeQty + ', ' + safePrice + ', \'' + safeDesc + '\', \'' + safeIcon + '\')">✏️ 编辑</button>' +
+        '<button class="del-btn" onclick="deleteSizeSetting(\'' + safeName + '\')">🗑️ 删除</button>' +
       '</td>' +
     '</tr>';
   }).join('');
