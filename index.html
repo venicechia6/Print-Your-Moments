@@ -3,184 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Print Your Moments — Photo Printing</title>
+<title>Print Your Moments — Shopee Style Photo Shop</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#faf9fc;color:#202024}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f5f5;color:#222}
 a{text-decoration:none;color:inherit}
-header{height:70px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 7%;position:sticky;top:0;z-index:10}
-.logo{font-weight:800;font-size:20px;letter-spacing:-.5px}
-.logo span{color:#8b5cf6}
-nav{display:flex;gap:25px;font-size:14px;color:#666}
-.cart{background:#202024;color:#fff;padding:10px 16px;border-radius:22px;font-size:13px}
-.hero{max-width:1180px;margin:auto;padding:65px 24px 45px;display:grid;grid-template-columns:1.05fr .95fr;gap:45px;align-items:center}
-.hero h1{font-size:52px;line-height:1.05;letter-spacing:-2px;margin-bottom:18px}
-.hero h1 span{color:#8b5cf6}
-.hero p{font-size:18px;color:#666;line-height:1.7;max-width:520px}
-.btn{display:inline-block;margin-top:26px;background:#202024;color:#fff;padding:15px 23px;border-radius:12px;font-weight:700;border:0;cursor:pointer;text-align:center}
-.btn:disabled{background:#ccc !important;cursor:not-allowed !important;opacity:0.6}
-.hero-card{height:370px;border-radius:28px;background:linear-gradient(135deg,#eee8ff,#fff);padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px;transform:rotate(1deg)}
-.photo{border-radius:18px;background-size:cover;background-position:center;min-height:145px;box-shadow:0 12px 25px #0001}
-.photo:nth-child(1){background-image:url("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=700&q=80")}
-.photo:nth-child(2){background-image:url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=80")}
-.photo:nth-child(3){background-image:url("https://images.unsplash.com/photo-1504150558240-0b4fd8946624?auto=format&fit=crop&w=700&q=80")}
-.photo:nth-child(4){background-image:url("https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=700&q=80")}
-section{max-width:1180px;margin:auto;padding:45px 24px}
-.title{text-align:center;margin-bottom:30px}
-.title h2{font-size:32px;margin-bottom:8px}.title p{color:#777}
-.products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-.card{background:#fff;border:1px solid #eee;border-radius:18px;padding:22px;box-shadow:0 8px 25px #00000008}
-.card .icon{font-size:32px;margin-bottom:15px}.card h3{margin-bottom:7px}.card p{color:#777;font-size:14px;line-height:1.5}.price{font-weight:800;font-size:20px;margin:15px 0}.smallbtn{width:100%;padding:11px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:700}.smallbtn:hover{background:#f4efff}
-.order{background:#fff;border:1px solid #eee;border-radius:22px;padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:30px}
-label{display:block;font-size:13px;font-weight:700;margin:14px 0 7px}
-select,input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:14px}
-.upload{border:2px dashed #cfc7e9;border-radius:15px;padding:28px;text-align:center;background:#fbf9ff;cursor:pointer}
-.upload input{display:none}.upload strong{display:block;margin-bottom:5px}.upload span{font-size:13px;color:#777}
-.preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.thumb{width:64px;height:64px;border-radius:8px;object-fit:cover}
-.total{margin-top:20px;padding:18px;background:#f7f5fa;border-radius:12px}.row{display:flex;justify-content:space-between;margin:7px 0}.grand{font-size:20px;font-weight:800;padding-top:10px;border-top:1px solid #ddd}
-footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-top:30px}footer p{color:#aaa;font-size:13px;margin-top:7px}
-@media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:40px}.hero h1{font-size:40px}.hero-card{height:300px}.products{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}}
-@media(max-width:480px){.products{grid-template-columns:1fr}.hero-card{height:260px}.photo{min-height:100px}}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;align-items:center;justify-content:center;padding:18px}
-.modal.show{display:flex}.modalbox{background:#fff;max-width:850px;width:100%;max-height:90vh;overflow:auto;border-radius:22px;padding:25px}
-.close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}
-.ordercode{background:#f6f2ff;border-radius:12px;padding:14px;margin:15px 0;font-weight:800;text-align:center}
-.status{display:inline-block;padding:6px 10px;border-radius:20px;background:#fff3cd;font-size:12px}
-.admin{margin-top:18px;overflow:auto}.admin table{width:100%;border-collapse:collapse;font-size:13px}.admin th,.admin td{padding:10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
-.address-box{background:#f9f9fb;padding:8px;border-radius:8px;border:1px solid #eee;margin-top:4px;font-size:12px;line-height:1.4}
-.copy-btn{font-size:11px;padding:3px 8px;margin-top:5px;cursor:pointer;border-radius:4px;border:1px solid #ccc;background:#fff}
-.del-btn{font-size:11px;padding:4px 8px;margin-top:5px;cursor:pointer;border-radius:4px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-weight:bold}
-.del-btn:hover{background:#ef4444;color:#fff}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#202024;color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:120}
-.qr-container{text-align:center;margin:15px 0;background:#fbf9ff;padding:15px;border-radius:12px;border:1px dashed #8b5cf6}
-.qr-img{width:220px;height:220px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd;object-fit:contain}
-.admin-tabs{display:flex;gap:10px;margin-bottom:15px;border-bottom:2px solid #eee;padding-bottom:10px}
-.admin-tab{padding:8px 16px;border-radius:8px;background:#f4f4f4;cursor:pointer;font-weight:bold;font-size:13px}
-.admin-tab.active{background:#8b5cf6;color:#fff}
-.price-edit-box{background:#fbf9ff;border:1px solid #e0d5f5;border-radius:12px;padding:15px;margin-bottom:15px}
+
+/* Header */
+header{height:70px;background:#fff;border-bottom:2px solid #ee4d2d;display:flex;align-items:center;justify-content:space-between;padding:0 7%;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+.logo{font-weight:900;font-size:22px;letter-spacing:-.5px;color:#222}
+.logo span{color:#ee4d2d}
+.cart-btn{background:#ee4d2d;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:bold;display:flex;align-items:center;gap:6px}
+
+/* Main Shopee Layout Container */
+.container{max-width:1200px;margin:25px auto;padding:0 15px}
+.shopee-product-card{background:#fff;border-radius:12px;padding:25px;display:grid;grid-template-columns:450px 1fr;gap:35px;box-shadow:0 4px 20px rgba(0,0,0,0.04)}
+
+/* 左侧：Shopee 商品轮播/展示图 (Product Main Gallery) */
+.gallery-box{display:flex;flex-direction:column;gap:12px}
+.main-img-wrap{width:100%;height:420px;border-radius:8px;overflow:hidden;border:1px solid #eee;position:relative;background:#f9f9f9}
+.main-img-wrap img{width:100%;height:100%;object-fit:cover;transition:all 0.2s ease}
+.badge{position:absolute;top:12px;left:12px;background:#ee4d2d;color:#fff;font-size:12px;font-weight:bold;padding:4px 8px;border-radius:4px}
+
+.thumb-list{display:flex;gap:10px;overflow-x:auto;padding-bottom:5px}
+.thumb-item{width:76px;height:76px;border-radius:6px;border:2px solid #eee;cursor:pointer;overflow:hidden;flex-shrink:0;transition:all 0.15s}
+.thumb-item img{width:100%;height:100%;object-fit:cover}
+.thumb-item:hover, .thumb-item.active{border-color:#ee4d2d;transform:scale(1.03)}
+
+/* 右侧：Shopee 规格与购买面板 */
+.product-info h1{font-size:22px;font-weight:700;line-height:1.4;margin-bottom:10px;color:#111}
+.rating-bar{display:flex;align-items:center;gap:15px;font-size:13px;color:#ee4d2d;margin-bottom:15px;padding-bottom:12px;border-bottom:1px solid #f0f0f0}
+.rating-bar span{color:#666}
+
+.price-banner{background:#fff5f3;padding:15px 20px;border-radius:8px;margin-bottom:20px;display:flex;align-items:baseline;gap:12px}
+.price-banner .label{font-size:13px;color:#888}
+.price-banner .price{font-size:28px;font-weight:800;color:#ee4d2d}
+
+/* 规格选择 Section */
+.spec-section{margin-bottom:18px}
+.spec-title{font-size:13px;font-weight:700;color:#555;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.spec-title span{font-size:12px;color:#999;font-weight:normal}
+
+.pills-group{display:flex;flex-wrap:wrap;gap:10px}
+.pill-btn{padding:8px 16px;border:1px solid #dcdcdc;background:#fff;border-radius:6px;font-size:13px;color:#333;cursor:pointer;transition:all 0.15s;position:relative;display:flex;align-items:center;gap:5px}
+.pill-btn:hover{border-color:#ee4d2d;color:#ee4d2d}
+.pill-btn.active{border-color:#ee4d2d;color:#ee4d2d;background:#fff5f3;font-weight:bold}
+.pill-btn.active::after{content:"✓";position:absolute;top:-5px;right:-5px;background:#ee4d2d;color:#fff;font-size:9px;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* 顾客上传照片区 */
+.user-upload-box{border:2px dashed #ffc5ba;background:#fffaf9;border-radius:10px;padding:16px;text-align:center;cursor:pointer;margin-top:15px}
+.user-upload-box input{display:none}
+.user-upload-box strong{color:#ee4d2d;display:block;font-size:14px;margin-bottom:3px}
+.user-upload-box span{font-size:12px;color:#777}
+.preview-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.preview-thumb{width:55px;height:55px;border-radius:6px;object-fit:cover;border:1px solid #ddd}
+
+/* 顾客表单及结账 */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
+.form-group{margin-bottom:10px}
+.form-group.full{grid-column:span 2}
+label{display:block;font-size:12px;font-weight:bold;color:#444;margin-bottom:4px}
+input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fff}
+
+.action-bar{margin-top:20px;display:flex;gap:15px;align-items:center}
+.btn-buy{flex:1;background:#ee4d2d;color:#fff;border:0;padding:14px;border-radius:8px;font-weight:bold;font-size:16px;cursor:pointer;text-align:center;box-shadow:0 4px 12px rgba(238,77,45,0.3)}
+.btn-buy:hover{background:#e03e1e}
+.btn-buy:disabled{background:#ccc;cursor:not-allowed;box-shadow:none}
+
+/* Modal & Admin */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;padding:15px}
+.modal.show{display:flex}
+.modalbox{background:#fff;max-width:800px;width:100%;max-height:90vh;overflow:auto;border-radius:16px;padding:25px}
+.close-btn{float:right;border:0;background:#eee;width:30px;height:30px;border-radius:50%;cursor:pointer}
+.ordercode{background:#fff5f3;color:#ee4d2d;border-radius:8px;padding:12px;margin:15px 0;font-weight:bold;text-align:center;border:1px dashed #ee4d2d}
+.qr-img{width:200px;height:200px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd;object-fit:contain}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:8px;display:none;z-index:1000;font-size:13px}
+
+@media(max-width:850px){
+  .shopee-product-card{grid-template-columns:1fr}
+  .main-img-wrap{height:300px}
+  .form-grid{grid-template-columns:1fr}
+  .form-group.full{grid-column:span 1}
+}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">Print <span>Your Moments</span></div>
-  <nav><a href="#products">Photo Print</a><a href="#order">Order</a><a href="#how">How It Works</a></nav>
-  <a class="cart" href="#order">🛒 Order</a>
+  <div class="cart-btn">🛒 Shopee Direct Store</div>
 </header>
 
-<main>
-<section class="hero">
-  <div>
-    <h1>Print your <span>moments.</span></h1>
-    <p>Upload your favourite photos, choose your size and paper, then place your order. Simple, fast and made for your memories.</p>
-    <a class="btn" href="#order">📷 Mula Cetak Sekarang</a>
-  </div>
-  <div class="hero-card"><div class="photo"></div><div class="photo"></div><div class="photo"></div><div class="photo"></div></div>
-</section>
+<div class="container">
+  <div class="shopee-product-card">
+    
+    <!-- 左侧：Shopee 风格商品展示相册 (Product Showcase) -->
+    <div class="gallery-box">
+      <div class="main-img-wrap">
+        <span class="badge">🔥 Preferred Seller</span>
+        <img id="mainProductImg" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80" alt="Product Image">
+      </div>
+      <!-- 缩略图列表：点击或悬停可切换主图 -->
+      <div class="thumb-list">
+        <div class="thumb-item active" onmouseover="switchProductImg(this, 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80')">
+          <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80" alt="Thumb 1">
+        </div>
+        <div class="thumb-item" onmouseover="switchProductImg(this, 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80')">
+          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=200&q=80" alt="Thumb 2">
+        </div>
+        <div class="thumb-item" onmouseover="switchProductImg(this, 'https://images.unsplash.com/photo-1504150558240-0b4fd8946624?auto=format&fit=crop&w=800&q=80')">
+          <img src="https://images.unsplash.com/photo-1504150558240-0b4fd8946624?auto=format&fit=crop&w=200&q=80" alt="Thumb 3">
+        </div>
+        <div class="thumb-item" onmouseover="switchProductImg(this, 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80')">
+          <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=200&q=80" alt="Thumb 4">
+        </div>
+      </div>
+    </div>
 
-<section id="products">
-<div class="title"><h2>Choose Your Photo Print</h2><p>Pilih saiz foto yang anda mahu</p></div>
-<div class="products" id="productGrid"></div>
-</section>
+    <!-- 右侧：商品信息与变体/规格选择 -->
+    <div class="product-info">
+      <h1>[READY STOCK] High Quality Photo Printing Service (4R / 5R / 6R / Photo Strip) Fujifilm Paper</h1>
+      
+      <div class="rating-bar">
+        ⭐ 4.9 | <span>2.4k Ratings</span> | <span>8.9k Sold</span>
+      </div>
 
-<section id="order">
-<div class="title"><h2>Place Your Order</h2><p>Upload your photos and let us do the rest.</p></div>
-<div class="order">
-<div>
-<label>Photo Size</label>
-<select id="size" onchange="update()"></select>
-<label>Paper Type</label>
-<select id="paper"><option value="Glossy (亮面)">Glossy — 亮面</option><option value="Matte (哑面)">Matte — 哑面</option></select>
-<label>Upload Photos</label>
-<div class="upload" onclick="document.getElementById('files').click()">
-<strong>＋ Add Photos</strong><span>从手机选择照片，可一次上传多张</span>
-<input id="files" type="file" accept="image/*" multiple onchange="previewFiles(event)">
-</div>
-<div class="preview" id="preview"></div>
-</div>
-<div>
-<label>Your Name</label><input id="custName" type="text" placeholder="Nama anda">
-<label>WhatsApp Number</label><input id="custPhone" type="text" placeholder="01X-XXXXXXX">
-<label>Delivery Address</label><input id="custAddress" type="text" placeholder="Alamat penghantaran penuh">
-<label>Shipping Option (Courier Service)</label>
-<select id="shipping" onchange="update()">
-  <option value="8.00">GDEX Express (Semenanjung) — RM8.00</option>
-  <option value="15.00">GDEX Express (Sabah & Sarawak) — RM15.00</option>
-  <option value="0">Self Pickup — RM0.00</option>
-</select>
-<div class="total">
-<div class="row"><span>Photos</span><span id="qty">0 pcs</span></div>
-<div class="row"><span>Photo Total</span><span id="photoTotal">RM0.00</span></div>
-<div class="row"><span>Shipping (GDEX)</span><span id="shipTotal">RM8.00</span></div>
-<div class="row grand"><span>Total</span><span id="grand">RM8.00</span></div>
-</div>
-<button id="orderBtn" class="btn" style="width:100%" onclick="placeOrder()">PROCEED TO PAYMENT</button>
-</div>
-</div>
-</section>
+      <div class="price-banner">
+        <span class="label">Harga / Total Price:</span>
+        <span class="price" id="displayGrandTotal">RM 13.00</span>
+      </div>
 
-<section id="how">
-<div class="title"><h2>How It Works</h2><p>3 langkah sahaja</p></div>
-<div class="products">
-<div class="card"><div class="icon">1️⃣</div><h3>Upload</h3><p>Pilih dan upload gambar dari telefon anda.</p></div>
-<div class="card"><div class="icon">2️⃣</div><h3>Order & Pay</h3><p>Penghantaran melalui GDEX, scan DuitNow QR dan muat naik resit.</p></div>
-<div class="card"><div class="icon">3️⃣</div><h3>Print & Ship</h3><p>Kami print, pack dan hantar terus ke pintu anda via GDEX.</p></div>
-</div>
-</section>
-</main>
+      <!-- 规格 1: 尺寸 (Size) -->
+      <div class="spec-section">
+        <div class="spec-title">Saiz Foto (Photo Size): <span>Pilih saiz</span></div>
+        <div class="pills-group" id="sizeContainer"></div>
+      </div>
 
-<div class="modal" id="successModal"><div class="modalbox">
-<button class="close" onclick="closeModal()">×</button>
-<h2 style="text-align:center">订单已建立 🎉</h2>
-<p style="color:#777;margin-top:5px;text-align:center">Sila scan DuitNow QR di bawah untuk membuat pembayaran.</p>
-<div class="ordercode" id="orderCode"></div>
-<div id="orderSummary" style="line-height:1.8;text-align:center"></div>
+      <!-- 规格 2: 数量组 (Quantity Package) -->
+      <div class="spec-section">
+        <div class="spec-title">Kuantiti (Quantity Set): <span>Pilih pakej set</span></div>
+        <div class="pills-group" id="qtyContainer"></div>
+      </div>
 
-<div class="qr-container">
-  <strong>Scan & Pay via DuitNow QR</strong>
-  <p style="font-size:12px;color:#666">Sesuai untuk TNG eWallet, MAE, Public Bank, CIMB, Maybank dll.</p>
-  <img class="qr-img" id="qrCodeImg" src="https://exdvuezgterujdtqvqql.supabase.co/storage/v1/object/public/photos/WhatsApp%20Image%202026-08-23%20at%2012.25.23.jpeg" alt="DuitNow QR">
-  <p style="font-size:13px;font-weight:bold;color:#8b5cf6">PRINT YOUR MOMENTS ENTERPRISE</p>
-</div>
+      <!-- 规格 3: 纸质 (Paper Type) -->
+      <div class="spec-section">
+        <div class="spec-title">Jenis Kertas (Paper Surface):</div>
+        <div class="pills-group" id="paperContainer">
+          <button class="pill-btn active" onclick="selectPaper(this, 'Glossy (亮面)')">Glossy (亮面)</button>
+          <button class="pill-btn" onclick="selectPaper(this, 'Matte (哑面)')">Matte (哑面)</button>
+        </div>
+      </div>
 
-<label>上传付款证明 / Muat Naik Resit Pembayaran</label>
-<input id="proof" type="file" accept="image/*" style="margin-bottom:12px">
-<button id="proofBtn" class="btn" style="width:100%" onclick="uploadProof()">提交付款证明 / Hantar Resit</button>
-</div></div>
+      <!-- 上传照片区 -->
+      <div class="user-upload-box" onclick="document.getElementById('files').click()">
+        <strong>＋ Muat Naik Gambar / Upload Photos</strong>
+        <span>Sila pilih gambar mengikut kuantiti set pilihan anda</span>
+        <input id="files" type="file" accept="image/*" multiple onchange="previewFiles(event)">
+      </div>
+      <div class="preview-grid" id="previewGrid"></div>
 
-<div class="modal" id="adminModal"><div class="modalbox" style="max-width:950px">
-<button class="close" onclick="document.getElementById('adminModal').classList.remove('show')">×</button>
-<h2>订单与规格管理后台</h2>
-<div class="admin-tabs">
-  <div class="admin-tab active" id="tabOrdersBtn" onclick="switchAdminTab('orders')">📦 订单列表</div>
-  <div class="admin-tab" id="tabPricesBtn" onclick="switchAdminTab('prices')">⚙️ 尺寸与价格设置</div>
-</div>
+      <!-- 寄送资料 -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nama / Full Name</label>
+          <input id="custName" type="text" placeholder="Ali bin Ahmad">
+        </div>
+        <div class="form-group">
+          <label>Nombor WhatsApp</label>
+          <input id="custPhone" type="text" placeholder="01X-XXXXXXX">
+        </div>
+        <div class="form-group full">
+          <label>Alamat Penghantaran (Delivery Address)</label>
+          <input id="custAddress" type="text" placeholder="Alamat Penuh Berserta Poskod">
+        </div>
+        <div class="form-group full">
+          <label>Pilihan Kurier (Shipping Fee)</label>
+          <select id="shipping" onchange="calculateTotal()">
+            <option value="8.00">GDEX Express (Semenanjung) — RM8.00</option>
+            <option value="15.00">GDEX Express (Sabah & Sarawak) — RM15.00</option>
+            <option value="0">Self Pickup — RM0.00</option>
+          </select>
+        </div>
+      </div>
 
-<div id="tabOrdersView">
-  <p style="color:#777;margin:7px 0 15px">查看完整邮寄地址及云端专属文件夹。</p>
-  <div class="admin" id="adminBody"></div>
-</div>
+      <!-- 下单按钮 -->
+      <div class="action-bar">
+        <button id="orderBtn" class="btn-buy" onclick="placeOrder()">BELI SEKARANG (BUY NOW)</button>
+      </div>
 
-<div id="tabPricesView" style="display:none">
-  <div class="price-edit-box">
-    <h3>新增 / 修改规格尺寸</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;margin-top:10px;align-items:end">
-      <div><label style="margin:0">尺寸名称 (如 4R)</label><input id="newSizeName" placeholder="例如: 8R"></div>
-      <div><label style="margin:0">单价 (RM)</label><input id="newSizePrice" type="number" step="0.01" placeholder="例如: 3.50"></div>
-      <div><label style="margin:0">尺寸描述</label><input id="newSizeDesc" placeholder="例如: 10 × 8 inch"></div>
-      <div><label style="margin:0">图标 Emoji</label><input id="newSizeIcon" placeholder="例如: 🖼️"></div>
-      <button class="smallbtn" style="background:#8b5cf6;color:#fff;height:43px;border:0" onclick="saveSizeSetting()">保存规格</button>
     </div>
   </div>
-  <div class="admin" id="pricesBody"></div>
 </div>
 
+<!-- 付款弹窗 (Modal) -->
+<div class="modal" id="successModal"><div class="modalbox">
+  <button class="close-btn" onclick="closeModal()">×</button>
+  <h2 style="text-align:center">Pesanan Berjaya Dibuat 🎉</h2>
+  <div class="ordercode" id="orderCode"></div>
+  <div id="orderSummary" style="line-height:1.8;text-align:center;font-size:14px"></div>
+
+  <div style="text-align:center;margin:15px 0;background:#fffaf9;padding:15px;border-radius:12px;border:1px dashed #ee4d2d">
+    <strong>Scan & Pay via DuitNow QR</strong>
+    <img class="qr-img" src="https://exdvuezgterujdtqvqql.supabase.co/storage/v1/object/public/photos/WhatsApp%20Image%202026-08-23%20at%2012.25.23.jpeg" alt="DuitNow QR">
+    <p style="font-size:13px;font-weight:bold;color:#ee4d2d">PRINT YOUR MOMENTS ENTERPRISE</p>
+  </div>
+
+  <label>Muat Naik Resit Pembayaran / 上传付款收据</label>
+  <input id="proof" type="file" accept="image/*" style="margin-bottom:12px">
+  <button id="proofBtn" class="btn-buy" style="width:100%" onclick="uploadProof()">Hantar Resit Pembayaran</button>
 </div></div>
 
 <div class="toast" id="toast"></div>
-<div style="text-align:center;padding:10px"><button class="smallbtn" style="max-width:180px" onclick="openAdmin()">⚙️ Admin Demo</button></div>
-<footer><strong>Print Your Moments</strong><p>Cetak kenangan, simpan selamanya. ❤️</p></footer>
 
 <script>
 var SUPABASE_URL = "https://exdvuezgterujdtqvqql.supabase.co";
@@ -195,87 +229,97 @@ function getSupabase() {
   return supabaseClient;
 }
 
+/* 规格数据定义 */
 var sizeList = [
-  { name: "4R", price: 0.50, description: "6 × 4 inch · Sesuai untuk album & frame", icon: "🖼️" },
-  { name: "5R", price: 1.00, description: "7 × 5 inch · Lebih besar untuk kenangan", icon: "📸" },
-  { name: "6R", price: 2.00, description: "9 × 6 inch · Sesuai untuk display", icon: "✨" },
-  { name: "Photo Strip", price: 1.50, description: "Untuk couple, friends & special moments", icon: "🎞️" }
+  { name: "4R", price: 0.50, icon: "🖼️" },
+  { name: "5R", price: 1.00, icon: "📸" },
+  { name: "6R", price: 2.00, icon: "✨" },
+  { name: "Photo Strip", price: 1.50, icon: "🎞️" }
 ];
 
-var count = 0;
-var isSubmittingOrder = false; // 防卡死全局提交锁
+var qtyOptions = [
+  { qty: 10, label: "10 pcs" },
+  { qty: 20, label: "20 pcs" },
+  { qty: 30, label: "30 pcs" },
+  { qty: 50, label: "50 pcs" },
+  { qty: 100, label: "100 pcs" }
+];
 
-async function loadProductSizes() {
-  var client = getSupabase();
-  if (client) {
-    var res = await client.from('product_sizes').select('*').order('created_at', { ascending: true });
-    if (res.data && res.data.length > 0) {
-      sizeList = res.data;
-    }
-  }
-  renderProductCards();
-  renderSizeSelectOptions();
-  update();
+var currentSelectedSize = "4R";
+var currentSelectedQty = 10;
+var currentSelectedPaper = "Glossy (亮面)";
+
+/* 切换 Shopee 商品大图 */
+function switchProductImg(element, imgUrl) {
+  document.querySelectorAll('.thumb-item').forEach(function(el){ el.classList.remove('active'); });
+  element.classList.add('active');
+  document.getElementById('mainProductImg').src = imgUrl;
 }
 
-function renderProductCards() {
-  var grid = document.getElementById('productGrid');
-  grid.innerHTML = sizeList.map(function(s) {
-    return '<div class="card">' +
-      '<div class="icon">' + (s.icon || '🖼️') + '</div>' +
-      '<h3>' + s.name + '</h3>' +
-      '<p>' + (s.description || '') + '</p>' +
-      '<div class="price">RM' + parseFloat(s.price).toFixed(2) + ' / pcs</div>' +
-      '<button class="smallbtn" onclick="choose(\'' + s.name + '\')">Choose ' + s.name + '</button>' +
-    '</div>';
+/* 页面初始化 */
+function initPage() {
+  renderPills();
+  calculateTotal();
+}
+
+function renderPills() {
+  // 尺寸 Pills
+  var sizeContainer = document.getElementById('sizeContainer');
+  sizeContainer.innerHTML = sizeList.map(function(s) {
+    var activeClass = (s.name === currentSelectedSize) ? 'active' : '';
+    return '<button class="pill-btn ' + activeClass + '" onclick="selectSize(this, \'' + s.name + '\')">' + (s.icon||'🖼️') + ' ' + s.name + '</button>';
+  }).join('');
+
+  // 数量 Pills
+  var qtyContainer = document.getElementById('qtyContainer');
+  qtyContainer.innerHTML = qtyOptions.map(function(q) {
+    var activeClass = (q.qty === currentSelectedQty) ? 'active' : '';
+    return '<button class="pill-btn ' + activeClass + '" onclick="selectQty(this, ' + q.qty + ')">📦 ' + q.label + '</button>';
   }).join('');
 }
 
-function renderSizeSelectOptions() {
-  var sel = document.getElementById('size');
-  sel.innerHTML = sizeList.map(function(s) {
-    return '<option value="' + s.name + '">' + s.name + ' — RM' + parseFloat(s.price).toFixed(2) + ' / pcs</option>';
-  }).join('');
+function selectSize(btn, sizeName) {
+  document.querySelectorAll('#sizeContainer .pill-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  currentSelectedSize = sizeName;
+  calculateTotal();
 }
 
-function choose(s) {
-  document.getElementById('size').value = s;
-  document.getElementById('order').scrollIntoView({behavior: 'smooth'});
-  update();
+function selectQty(btn, qtyNum) {
+  document.querySelectorAll('#qtyContainer .pill-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  currentSelectedQty = qtyNum;
+  calculateTotal();
+}
+
+function selectPaper(btn, paperType) {
+  document.querySelectorAll('#paperContainer .pill-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  currentSelectedPaper = paperType;
+}
+
+function calculateTotal() {
+  var matchedSize = sizeList.find(function(s){ return s.name === currentSelectedSize; });
+  var unitPrice = matchedSize ? matchedSize.price : 0.50;
+
+  var photoSubtotal = unitPrice * currentSelectedQty;
+  var shipFee = parseFloat(document.getElementById('shipping').value) || 0;
+  var grandTotal = photoSubtotal + shipFee;
+
+  document.getElementById('displayGrandTotal').textContent = 'RM ' + grandTotal.toFixed(2);
+
+  return { unitPrice: unitPrice, photoSubtotal: photoSubtotal, grandTotal: grandTotal };
 }
 
 function previewFiles(e) {
-  var box = document.getElementById('preview');
-  box.innerHTML = '';
-  count = e.target.files.length;
+  var grid = document.getElementById('previewGrid');
+  grid.innerHTML = '';
   Array.from(e.target.files).forEach(function(f) {
     var img = document.createElement('img');
-    img.className = 'thumb';
+    img.className = 'preview-thumb';
     img.src = URL.createObjectURL(f);
-    box.appendChild(img);
+    grid.appendChild(img);
   });
-  update();
-}
-
-function getUnitPrice(sizeName) {
-  var item = sizeList.find(function(s) { return s.name === sizeName; });
-  return item ? parseFloat(item.price) : 0.5;
-}
-
-function update() {
-  var s = document.getElementById('size').value;
-  var p = getUnitPrice(s);
-  var ship = parseFloat(document.getElementById('shipping').value) || 0;
-  document.getElementById('qty').textContent = count + ' pcs';
-  document.getElementById('photoTotal').textContent = 'RM' + (count * p).toFixed(2);
-  document.getElementById('shipTotal').textContent = 'RM' + ship.toFixed(2);
-  document.getElementById('grand').textContent = 'RM' + (count * p + ship).toFixed(2);
-}
-
-function totalAmount() {
-  var p = getUnitPrice(document.getElementById('size').value);
-  var ship = parseFloat(document.getElementById('shipping').value) || 0;
-  return count * p + ship;
 }
 
 function showToast(t) {
@@ -289,16 +333,14 @@ function closeModal() {
   document.getElementById('successModal').classList.remove('show');
 }
 
-/* 带有防连击/防卡死保护的下单流程 */
+/* 提交订单 */
 async function placeOrder() {
-  if (isSubmittingOrder) return; // 如果正在处理，直接阻止二次点击
-
   var client = getSupabase();
   var fileInput = document.getElementById('files');
   var orderBtn = document.getElementById('orderBtn');
 
-  if (count === 0 || !fileInput.files.length) {
-    showToast('请先上传照片 / Sila upload foto dahulu.');
+  if (!fileInput.files.length) {
+    showToast('Sila muat naik foto anda / 请上传照片');
     return;
   }
 
@@ -307,15 +349,15 @@ async function placeOrder() {
   var address = document.getElementById('custAddress').value.trim();
 
   if (!name || !phone || !address) {
-    showToast('请填写姓名、WhatsApp 和地址');
+    showToast('Sila isi Nama, WhatsApp dan Alamat');
     return;
   }
 
-  // 激活锁与按钮禁用
-  isSubmittingOrder = true;
+  var calc = calculateTotal();
+  var specText = currentSelectedSize + ' x ' + currentSelectedQty + ' pcs (RM' + calc.unitPrice.toFixed(2) + '/pcs)';
+
   orderBtn.disabled = true;
-  orderBtn.innerText = '正在提交订单及上传照片...';
-  showToast('正在提交订单及上传照片...');
+  orderBtn.innerText = 'Memproses Pesanan...';
 
   try {
     var orderId = 'PYM' + String(Date.now()).slice(-6);
@@ -336,69 +378,52 @@ async function placeOrder() {
     var shipSelect = document.getElementById('shipping');
     var shipText = shipSelect.options[shipSelect.selectedIndex].text;
 
-    var orderRes = await client.from('orders').insert([{
+    await client.from('orders').insert([{
       id: orderId,
       customer_name: name,
       whatsapp: phone,
       address: address + ' [' + shipText + ']',
-      photo_size: document.getElementById('size').value,
-      paper_type: document.getElementById('paper').value,
-      total_amount: totalAmount(),
+      photo_size: specText,
+      paper_type: currentSelectedPaper,
+      total_amount: calc.grandTotal,
       status: '待付款'
     }]);
-
-    if (orderRes.error) throw orderRes.error;
 
     var photoRecords = uploadedUrls.map(function(url) {
       return { order_id: orderId, photo_url: url };
     });
-    var photoRes = await client.from('order_photos').insert(photoRecords);
-    if (photoRes.error) throw photoRes.error;
+    await client.from('order_photos').insert(photoRecords);
 
     window.currentOrderId = orderId;
     window.currentCustName = name;
 
     document.getElementById('orderCode').textContent = 'ORDER ID: ' + orderId;
     document.getElementById('orderSummary').innerHTML = 
-      '规格: <b>' + document.getElementById('size').value + ' (' + document.getElementById('paper').value + ')</b> × ' + count + ' pcs<br>' +
-      '<strong>Jumlah Perlu Dibayar: RM' + totalAmount().toFixed(2) + '</strong>';
+      'Spesifikasi: <b>' + specText + '</b><br>' +
+      'Kertas: <b>' + currentSelectedPaper + '</b> | Foto: <b>' + fileInput.files.length + '</b> 张<br>' +
+      '<strong style="color:#ee4d2d;font-size:16px">Jumlah Perlu Dibayar: RM ' + calc.grandTotal.toFixed(2) + '</strong>';
+    
     document.getElementById('successModal').classList.add('show');
 
   } catch (err) {
-    alert('提交失败：' + (err.message || err));
+    alert('Ralat: ' + (err.message || err));
   } finally {
-    // 强制延迟 3 秒释放保护锁，防止暴击
-    setTimeout(function() {
-      isSubmittingOrder = false;
-      orderBtn.disabled = false;
-      orderBtn.innerText = 'PROCEED TO PAYMENT';
-    }, 3000);
+    orderBtn.disabled = false;
+    orderBtn.innerText = 'BELI SEKARANG (BUY NOW)';
   }
 }
 
-/* 带有防连击保护的凭证上传 */
 async function uploadProof() {
   var client = getSupabase();
   var f = document.getElementById('proof').files[0];
-  var proofBtn = document.getElementById('proofBtn');
-
-  if (!f) {
-    showToast('请选择付款凭证 / Sila pilih resit');
-    return;
-  }
-
-  proofBtn.disabled = true;
-  proofBtn.innerText = '正在上传凭证...';
+  if (!f) return showToast('Sila pilih resit pembayaran / 请选择收据');
 
   try {
-    showToast('正在上传凭证...');
-    var name = window.currentCustName || 'Customer';
-    var cleanName = name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_');
+    showToast('Memuat naik resit...');
+    var cleanName = (window.currentCustName || 'Customer').replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_');
     var fileName = cleanName + '_' + window.currentOrderId + '/receipt_' + Date.now() + '.jpg';
     
-    var res = await client.storage.from(BUCKET_NAME).upload(fileName, f);
-    if (res.error) throw res.error;
-
+    await client.storage.from(BUCKET_NAME).upload(fileName, f);
     var pubRes = client.storage.from(BUCKET_NAME).getPublicUrl(fileName);
 
     await client.from('orders').update({
@@ -406,182 +431,14 @@ async function uploadProof() {
       status: '付款审核中'
     }).eq('id', window.currentOrderId);
 
-    showToast('付款证明已提交！Terima kasih.');
+    showToast('Resit berjaya dihantar!');
     closeModal();
   } catch (err) {
-    alert('上传凭证失败：' + (err.message || err));
-  } finally {
-    proofBtn.disabled = false;
-    proofBtn.innerText = '提交付款证明 / Hantar Resit';
+    alert('Ralat: ' + (err.message || err));
   }
 }
 
-function openAdmin() {
-  document.getElementById('adminModal').classList.add('show');
-  renderAdmin();
-  renderPricesAdmin();
-}
-
-function switchAdminTab(tab) {
-  if (tab === 'orders') {
-    document.getElementById('tabOrdersView').style.display = 'block';
-    document.getElementById('tabPricesView').style.display = 'none';
-    document.getElementById('tabOrdersBtn').classList.add('active');
-    document.getElementById('tabPricesBtn').classList.remove('active');
-  } else {
-    document.getElementById('tabOrdersView').style.display = 'none';
-    document.getElementById('tabPricesView').style.display = 'block';
-    document.getElementById('tabOrdersBtn').classList.remove('active');
-    document.getElementById('tabPricesBtn').classList.add('active');
-  }
-}
-
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(function() {
-    showToast('已复制完整邮寄资料！');
-  });
-}
-
-async function deleteOrder(orderId) {
-  if (!confirm('确定要删除订单 ' + orderId + ' 吗？删除后不可恢复！')) return;
-  var client = getSupabase();
-  await client.from('order_photos').delete().eq('order_id', orderId);
-  var res = await client.from('orders').delete().eq('id', orderId);
-  if (res.error) {
-    alert('删除失败：' + res.error.message);
-  } else {
-    showToast('订单已成功删除！');
-    renderAdmin();
-  }
-}
-
-async function renderAdmin() {
-  var client = getSupabase();
-  var b = document.getElementById('adminBody');
-  b.innerHTML = '<p style="color:#777">加载云端数据中...</p>';
-
-  if (!client) return;
-
-  var res = await client.from('orders').select('*, order_photos(photo_url)').order('created_at', { ascending: false });
-  if (res.error || !res.data || !res.data.length) {
-    b.innerHTML = '<p style="color:#777">目前还没有订单。</p>';
-    return;
-  }
-
-  var orders = res.data;
-  var rows = orders.map(function(o) {
-    var photosHtml = o.order_photos ? o.order_photos.map(function(p, idx) {
-      return '<a href="' + p.photo_url + '" target="_blank" style="color:#8b5cf6;display:inline-block;margin-right:5px">📷 照片' + (idx + 1) + '</a>';
-    }).join('') : '无照片';
-
-    var proofHtml = o.payment_proof ? '<br><a href="' + o.payment_proof + '" target="_blank" style="color:green;font-weight:bold;display:inline-block;margin-top:5px">🧾 查看付款凭证</a>' : '';
-    var addressInfo = "姓名: " + o.customer_name + "\n电话: " + o.whatsapp + "\n地址: " + o.address;
-    var statuses = ['待付款','付款审核中','已付款','打印中','已包装','已发货','已取消'];
-    var optionsHtml = statuses.map(function(s) {
-      return '<option ' + (o.status === s ? 'selected' : '') + '>' + s + '</option>';
-    }).join('');
-
-    return '<tr>' +
-      '<td><b>' + o.id + '</b><br><small style="color:#888">' + new Date(o.created_at).toLocaleString() + '</small></td>' +
-      '<td style="min-width:220px">' +
-        '<b>姓名：</b>' + o.customer_name + '<br>' +
-        '<b>电话：</b>' + o.whatsapp +
-        '<div class="address-box"><b>地址：</b>' + o.address + '</div>' +
-        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 一键复制</button>' +
-      '</td>' +
-      '<td><b>' + o.photo_size + '</b><br><small>' + (o.paper_type || 'Glossy') + '</small></td>' +
-      '<td><b>RM' + parseFloat(o.total_amount).toFixed(2) + '</b></td>' +
-      '<td><span class="status">' + o.status + '</span></td>' +
-      '<td>' + photosHtml + proofHtml + '</td>' +
-      '<td>' +
-        '<select onchange="setStatus(\'' + o.id + '\', this.value)">' + optionsHtml + '</select><br>' +
-        '<button class="del-btn" onclick="deleteOrder(\'' + o.id + '\')">🗑️ 删除订单</button>' +
-      '</td>' +
-    '</tr>';
-  }).join('');
-
-  b.innerHTML = '<table><tr><th>订单号</th><th>顾客及邮寄资料</th><th>规格</th><th>总额</th><th>状态</th><th>云端照片/凭证</th><th>操作</th></tr>' + rows + '</table>';
-}
-
-async function setStatus(orderId, newStatus) {
-  var client = getSupabase();
-  if (newStatus === '已取消') {
-    if (confirm('要把订单 ' + orderId + ' 设为已取消，并直接从数据库删除吗？')) {
-      deleteOrder(orderId);
-      return;
-    }
-  }
-  await client.from('orders').update({ status: newStatus }).eq('id', orderId);
-  showToast('状态更新成功');
-  renderAdmin();
-}
-
-async function saveSizeSetting() {
-  var name = document.getElementById('newSizeName').value.trim();
-  var price = parseFloat(document.getElementById('newSizePrice').value);
-  var desc = document.getElementById('newSizeDesc').value.trim();
-  var icon = document.getElementById('newSizeIcon').value.trim() || '🖼️';
-
-  if (!name || isNaN(price)) {
-    alert('请填写正确的尺寸名称和价格！');
-    return;
-  }
-
-  var client = getSupabase();
-  var res = await client.from('product_sizes').upsert([{
-    name: name,
-    price: price,
-    description: desc,
-    icon: icon
-  }], { onConflict: 'name' });
-
-  if (res.error) {
-    alert('保存失败：' + res.error.message);
-  } else {
-    showToast('规格保存成功！');
-    document.getElementById('newSizeName').value = '';
-    document.getElementById('newSizePrice').value = '';
-    document.getElementById('newSizeDesc').value = '';
-    document.getElementById('newSizeIcon').value = '';
-    await loadProductSizes();
-    renderPricesAdmin();
-  }
-}
-
-async function deleteSizeSetting(sizeName) {
-  if (!confirm('确定要删除规格 ' + sizeName + ' 吗？')) return;
-  var client = getSupabase();
-  await client.from('product_sizes').delete().eq('name', sizeName);
-  showToast('规格已删除');
-  await loadProductSizes();
-  renderPricesAdmin();
-}
-
-function renderPricesAdmin() {
-  var b = document.getElementById('pricesBody');
-  var rows = sizeList.map(function(s) {
-    return '<tr>' +
-      '<td>' + (s.icon || '🖼️') + ' <b>' + s.name + '</b></td>' +
-      '<td>RM ' + parseFloat(s.price).toFixed(2) + '</td>' +
-      '<td>' + (s.description || '') + '</td>' +
-      '<td>' +
-        '<button class="copy-btn" onclick="fillPriceEdit(\'' + s.name + '\', ' + s.price + ', \'' + (s.description||'').replace(/'/g, "\\'") + '\', \'' + (s.icon||'') + '\')">✏️ 编辑</button> ' +
-        '<button class="del-btn" onclick="deleteSizeSetting(\'' + s.name + '\')">🗑️ 删除</button>' +
-      '</td>' +
-    '</tr>';
-  }).join('');
-
-  b.innerHTML = '<table><tr><th>规格名称</th><th>单价</th><th>描述</th><th>操作</th></tr>' + rows + '</table>';
-}
-
-function fillPriceEdit(name, price, desc, icon) {
-  document.getElementById('newSizeName').value = name;
-  document.getElementById('newSizePrice').value = price;
-  document.getElementById('newSizeDesc').value = desc;
-  document.getElementById('newSizeIcon').value = icon;
-}
-
-loadProductSizes();
+initPage();
 </script>
 </body>
 </html>
