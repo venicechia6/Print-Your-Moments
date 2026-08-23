@@ -49,7 +49,7 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 .admin{margin-top:18px;overflow:auto}.admin table{width:100%;border-collapse:collapse;font-size:13px}.admin th,.admin td{padding:10px;border-bottom:1px solid #eee;text-align:left}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#202024;color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:120}
 .qr-container{text-align:center;margin:15px 0;background:#fbf9ff;padding:15px;border-radius:12px;border:1px dashed #8b5cf6}
-.qr-img{width:180px;height:180px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd}
+.qr-img{width:220px;height:220px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd;object-fit:contain}
 </style>
 </head>
 <body>
@@ -137,7 +137,7 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <div class="qr-container">
   <strong>Scan & Pay via DuitNow QR</strong>
   <p style="font-size:12px;color:#666">Sesuai untuk TNG eWallet, MAE, Public Bank, CIMB, Maybank dll.</p>
-  <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=DuitNowPAYMENT" alt="DuitNow QR">
+  <img class="qr-img" id="qrCodeImg" src="https://exdvuezgterujdtqvqql.supabase.co/storage/v1/object/public/photos/WhatsApp%20Image%202026-08-23%20at%2012.25.23.jpeg" alt="DuitNow QR">
   <p style="font-size:13px;font-weight:bold;color:#8b5cf6">PRINT YOUR MOMENTS ENTERPRISE</p>
 </div>
 
@@ -158,6 +158,7 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <script>
 var SUPABASE_URL = "https://exdvuezgterujdtqvqql.supabase.co";
 var SUPABASE_KEY = "sb_publishable_-kLzjGxi1otHpgKyPkeWuA_lyrNxNPM";
+var BUCKET_NAME = "photos";
 var supabaseClient = null;
 
 function getSupabase() {
@@ -243,10 +244,10 @@ async function placeOrder() {
     for (var i = 0; i < fileInput.files.length; i++) {
       var file = fileInput.files[i];
       var fileName = orderId + '_' + Date.now() + '_' + file.name;
-      var res = await client.storage.from('photos').upload(fileName, file);
+      var res = await client.storage.from(BUCKET_NAME).upload(fileName, file);
       if (res.error) throw res.error;
 
-      var pubRes = client.storage.from('photos').getPublicUrl(fileName);
+      var pubRes = client.storage.from(BUCKET_NAME).getPublicUrl(fileName);
       uploadedUrls.push(pubRes.data.publicUrl);
     }
 
@@ -293,10 +294,10 @@ async function uploadProof() {
   try {
     showToast('正在上传凭证...');
     var fileName = 'proof_' + window.currentOrderId + '_' + Date.now() + '_' + f.name;
-    var res = await client.storage.from('photos').upload(fileName, f);
+    var res = await client.storage.from(BUCKET_NAME).upload(fileName, f);
     if (res.error) throw res.error;
 
-    var pubRes = client.storage.from('photos').getPublicUrl(fileName);
+    var pubRes = client.storage.from(BUCKET_NAME).getPublicUrl(fileName);
 
     await client.from('orders').update({
       payment_proof: pubRes.data.publicUrl,
