@@ -79,9 +79,7 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 
 <section id="products">
 <div class="title"><h2>Choose Your Photo Print</h2><p>Pilih saiz foto yang anda mahu</p></div>
-<div class="products" id="productGrid">
-  <!-- 动态加载产品列表 -->
-</div>
+<div class="products" id="productGrid"></div>
 </section>
 
 <section id="order">
@@ -196,10 +194,10 @@ function getSupabase() {
 }
 
 var sizeList = [
-  { name: "4R", price: 0.50, desc: "6 × 4 inch · Sesuai untuk album & frame", icon: "🖼️" },
-  { name: "5R", price: 1.00, desc: "7 × 5 inch · Lebih besar untuk kenangan", icon: "📸" },
-  { name: "6R", price: 2.00, desc: "9 × 6 inch · Sesuai untuk display", icon: "✨" },
-  { name: "Photo Strip", price: 1.50, desc: "Untuk couple, friends & special moments", icon: "🎞️" }
+  { name: "4R", price: 0.50, description: "6 × 4 inch · Sesuai untuk album & frame", icon: "🖼️" },
+  { name: "5R", price: 1.00, description: "7 × 5 inch · Lebih besar untuk kenangan", icon: "📸" },
+  { name: "6R", price: 2.00, description: "9 × 6 inch · Sesuai untuk display", icon: "✨" },
+  { name: "Photo Strip", price: 1.50, description: "Untuk couple, friends & special moments", icon: "🎞️" }
 ];
 
 var count = 0;
@@ -223,7 +221,7 @@ function renderProductCards() {
     return '<div class="card">' +
       '<div class="icon">' + (s.icon || '🖼️') + '</div>' +
       '<h3>' + s.name + '</h3>' +
-      '<p>' + (s.desc || '') + '</p>' +
+      '<p>' + (s.description || '') + '</p>' +
       '<div class="price">RM' + parseFloat(s.price).toFixed(2) + ' / pcs</div>' +
       '<button class="smallbtn" onclick="choose(\'' + s.name + '\')">Choose ' + s.name + '</button>' +
     '</div>';
@@ -490,7 +488,6 @@ async function setStatus(orderId, newStatus) {
   renderAdmin();
 }
 
-// 规格修改与保存逻辑
 async function saveSizeSetting() {
   var name = document.getElementById('newSizeName').value.trim();
   var price = parseFloat(document.getElementById('newSizePrice').value);
@@ -506,7 +503,7 @@ async function saveSizeSetting() {
   var res = await client.from('product_sizes').upsert([{
     name: name,
     price: price,
-    desc: desc,
+    description: desc,
     icon: icon
   }], { onConflict: 'name' });
 
@@ -538,9 +535,9 @@ function renderPricesAdmin() {
     return '<tr>' +
       '<td>' + (s.icon || '🖼️') + ' <b>' + s.name + '</b></td>' +
       '<td>RM ' + parseFloat(s.price).toFixed(2) + '</td>' +
-      '<td>' + (s.desc || '') + '</td>' +
+      '<td>' + (s.description || '') + '</td>' +
       '<td>' +
-        '<button class="copy-btn" onclick="fillPriceEdit(\'' + s.name + '\', ' + s.price + ', \'' + (s.desc||'').replace(/'/g, "\\'") + '\', \'' + (s.icon||'') + '\')">✏️ 编辑</button> ' +
+        '<button class="copy-btn" onclick="fillPriceEdit(\'' + s.name + '\', ' + s.price + ', \'' + (s.description||'').replace(/'/g, "\\'") + '\', \'' + (s.icon||'') + '\')">✏️ 编辑</button> ' +
         '<button class="del-btn" onclick="deleteSizeSetting(\'' + s.name + '\')">🗑️ 删除</button>' +
       '</td>' +
     '</tr>';
