@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Print Your Moments — Photo Printing</title>
-<!-- 引入 Supabase 云端 SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -42,7 +41,7 @@ select,input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;ba
 footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-top:30px}footer p{color:#aaa;font-size:13px;margin-top:7px}
 @media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:40px}.hero h1{font-size:40px}.hero-card{height:300px}.products{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}}
 @media(max-width:480px){.products{grid-template-columns:1fr}.hero-card{height:260px}.photo{min-height:100px}}
-.modal{display:none;position:fixed;inset:0;background:#0008;z-index:99;align-items:center;justify-content:center;padding:18px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;align-items:center;justify-content:center;padding:18px}
 .modal.show{display:flex}.modalbox{background:#fff;max-width:600px;width:100%;max-height:90vh;overflow:auto;border-radius:22px;padding:25px}
 .close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}
 .ordercode{background:#f6f2ff;border-radius:12px;padding:14px;margin:15px 0;font-weight:800;text-align:center}
@@ -157,12 +156,19 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <footer><strong>Print Your Moments</strong><p>Cetak kenangan, simpan selamanya. ❤️</p></footer>
 
 <script>
-const SUPABASE_URL = "https://exdvuezgterujdtqvqql.supabase.co";
-const SUPABASE_KEY = "sb_publishable_-kLzjGxi1otHpgKyPkeWuA_lyrNxNPM";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var SUPABASE_URL = "https://exdvuezgterujdtqvqql.supabase.co";
+var SUPABASE_KEY = "sb_publishable_-kLzjGxi1otHpgKyPkeWuA_lyrNxNPM";
+var supabaseClient = null;
 
-const prices = {"4R": 0.50, "5R": 1.00, "6R": 2.00, "Photo Strip": 1.50};
-let count = 0;
+function getSupabase() {
+  if (!supabaseClient && window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return supabaseClient;
+}
+
+var prices = {"4R": 0.50, "5R": 1.00, "6R": 2.00, "Photo Strip": 1.50};
+var count = 0;
 
 function choose(s) {
   document.getElementById('size').value = s;
@@ -171,11 +177,11 @@ function choose(s) {
 }
 
 function previewFiles(e) {
-  const box = document.getElementById('preview');
+  var box = document.getElementById('preview');
   box.innerHTML = '';
   count = e.target.files.length;
-  [...e.target.files].forEach(f => {
-    const img = document.createElement('img');
+  Array.from(e.target.files).forEach(function(f) {
+    var img = document.createElement('img');
     img.className = 'thumb';
     img.src = URL.createObjectURL(f);
     box.appendChild(img);
@@ -184,9 +190,9 @@ function previewFiles(e) {
 }
 
 function update() {
-  const s = document.getElementById('size').value;
-  const p = prices[s];
-  const ship = parseFloat(document.getElementById('shipping').value);
+  var s = document.getElementById('size').value;
+  var p = prices[s] || 0.5;
+  var ship = parseFloat(document.getElementById('shipping').value) || 0;
   document.getElementById('qty').textContent = count + ' pcs';
   document.getElementById('photoTotal').textContent = 'RM' + (count * p).toFixed(2);
   document.getElementById('shipTotal').textContent = 'RM' + ship.toFixed(2);
@@ -194,14 +200,16 @@ function update() {
 }
 
 function totalAmount() {
-  return count * prices[document.getElementById('size').value] + parseFloat(document.getElementById('shipping').value);
+  var p = prices[document.getElementById('size').value] || 0.5;
+  var ship = parseFloat(document.getElementById('shipping').value) || 0;
+  return count * p + ship;
 }
 
 function showToast(t) {
-  const x = document.getElementById('toast');
+  var x = document.getElementById('toast');
   x.textContent = t;
   x.style.display = 'block';
-  setTimeout(() => x.style.display = 'none', 2500);
+  setTimeout(function() { x.style.display = 'none'; }, 2500);
 }
 
 function closeModal() {
@@ -209,16 +217,17 @@ function closeModal() {
 }
 
 async function placeOrder() {
-  const fileInput = document.getElementById('files');
+  var client = getSupabase();
+  var fileInput = document.getElementById('files');
   if (count === 0 || !fileInput.files.length) {
     showToast('请先上传照片 / Sila upload foto dahulu.');
     return;
   }
 
-  const ins = document.querySelectorAll('#order input');
-  const name = ins[0].value.trim();
-  const phone = ins[1].value.trim();
-  const address = ins[2].value.trim();
+  var ins = document.querySelectorAll('#order input');
+  var name = ins[0].value.trim();
+  var phone = ins[1].value.trim();
+  var address = ins[2].value.trim();
 
   if (!name || !phone || !address) {
     showToast('请填写姓名、WhatsApp 和地址');
@@ -228,19 +237,20 @@ async function placeOrder() {
   showToast('正在提交订单及上传照片...');
 
   try {
-    const orderId = 'PYM' + String(Date.now()).slice(-6);
+    var orderId = 'PYM' + String(Date.now()).slice(-6);
+    var uploadedUrls = [];
 
-    const uploadedUrls = [];
-    for (let file of fileInput.files) {
-      const fileName = `${orderId}_${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage.from('photos').upload(fileName, file);
-      if (error) throw error;
+    for (var i = 0; i < fileInput.files.length; i++) {
+      var file = fileInput.files[i];
+      var fileName = orderId + '_' + Date.now() + '_' + file.name;
+      var res = await client.storage.from('photos').upload(fileName, file);
+      if (res.error) throw res.error;
 
-      const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(fileName);
-      uploadedUrls.push(publicUrlData.publicUrl);
+      var pubRes = client.storage.from('photos').getPublicUrl(fileName);
+      uploadedUrls.push(pubRes.data.publicUrl);
     }
 
-    const { error: orderError } = await supabase.from('orders').insert([{
+    var orderRes = await client.from('orders').insert([{
       id: orderId,
       customer_name: name,
       whatsapp: phone,
@@ -251,14 +261,13 @@ async function placeOrder() {
       status: '待付款'
     }]);
 
-    if (orderError) throw orderError;
+    if (orderRes.error) throw orderRes.error;
 
-    const photoRecords = uploadedUrls.map(url => ({
-      order_id: orderId,
-      photo_url: url
-    }));
-    const { error: photoError } = await supabase.from('order_photos').insert(photoRecords);
-    if (photoError) throw photoError;
+    var photoRecords = uploadedUrls.map(function(url) {
+      return { order_id: orderId, photo_url: url };
+    });
+    var photoRes = await client.from('order_photos').insert(photoRecords);
+    if (photoRes.error) throw photoRes.error;
 
     window.currentOrderId = orderId;
 
@@ -269,12 +278,13 @@ async function placeOrder() {
     document.getElementById('successModal').classList.add('show');
 
   } catch (err) {
-    alert('提交失败：' + err.message);
+    alert('提交失败：' + (err.message || err));
   }
 }
 
 async function uploadProof() {
-  const f = document.getElementById('proof').files[0];
+  var client = getSupabase();
+  var f = document.getElementById('proof').files[0];
   if (!f) {
     showToast('请选择付款凭证 / Sila pilih resit');
     return;
@@ -282,21 +292,21 @@ async function uploadProof() {
 
   try {
     showToast('正在上传凭证...');
-    const fileName = `proof_${window.currentOrderId}_${Date.now()}_${f.name}`;
-    const { error } = await supabase.storage.from('photos').upload(fileName, f);
-    if (error) throw error;
+    var fileName = 'proof_' + window.currentOrderId + '_' + Date.now() + '_' + f.name;
+    var res = await client.storage.from('photos').upload(fileName, f);
+    if (res.error) throw res.error;
 
-    const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(fileName);
+    var pubRes = client.storage.from('photos').getPublicUrl(fileName);
 
-    await supabase.from('orders').update({
-      payment_proof: publicUrlData.publicUrl,
+    await client.from('orders').update({
+      payment_proof: pubRes.data.publicUrl,
       status: '付款审核中'
     }).eq('id', window.currentOrderId);
 
     showToast('付款证明已提交！Terima kasih.');
     closeModal();
   } catch (err) {
-    alert('上传凭证失败：' + err.message);
+    alert('上传凭证失败：' + (err.message || err));
   }
 }
 
@@ -306,44 +316,55 @@ function openAdmin() {
 }
 
 async function renderAdmin() {
-  const b = document.getElementById('adminBody');
+  var client = getSupabase();
+  var b = document.getElementById('adminBody');
   b.innerHTML = '<p style="color:#777">加载云端数据中...</p>';
 
-  const { data: orders, error } = await supabase
+  if (!client) {
+    b.innerHTML = '<p style="color:red">Supabase 数据库连接中，请稍后再试...</p>';
+    return;
+  }
+
+  var res = await client
     .from('orders')
     .select('*, order_photos(photo_url)')
     .order('created_at', { ascending: false });
 
-  if (error || !orders || !orders.length) {
+  if (res.error || !res.data || !res.data.length) {
     b.innerHTML = '<p style="color:#777">目前还没有订单。</p>';
     return;
   }
 
-  b.innerHTML = '<table><tr><th>订单号</th><th>顾客信息</th><th>规格</th><th>金额</th><th>状态</th><th>照片/凭证</th><th>操作</th></tr>' +
-  orders.map(o => {
-    const photosHtml = o.order_photos ? o.order_photos.map((p, idx) => `<a href="${p.photo_url}" target="_blank" style="color:#8b5cf6">照片${idx+1}</a>`).join(' ') : '无照片';
-    const proofHtml = o.payment_proof ? `<br><a href="${o.payment_proof}" target="_blank" style="color:green;font-weight:bold">查看凭证</a>` : '';
-    
-    return `<tr>
-      <td><b>${o.id}</b><br><small>${new Date(o.created_at).toLocaleString()}</small></td>
-      <td>${o.customer_name}<br>${o.whatsapp}<br><small>${o.address}</small></td>
-      <td>${o.photo_size}<br>${o.paper_type}</td>
-      <td>RM${parseFloat(o.total_amount).toFixed(2)}</td>
-      <td><span class="status">${o.status}</span></td>
-      <td>${photosHtml} ${proofHtml}</td>
-      <td>
-        <select onchange="setStatus('${o.id}', this.value)">
-          ${['待付款','付款审核中','已付款','打印中','已包装','已发货','已取消'].map(s => 
-            `<option ${o.status === s ? 'selected' : ''}>${s}</option>`
-          ).join('')}
-        </select>
-      </td>
-    </tr>`;
-  }).join('') + '</table>';
+  var orders = res.data;
+  var rows = orders.map(function(o) {
+    var photosHtml = o.order_photos ? o.order_photos.map(function(p, idx) {
+      return '<a href="' + p.photo_url + '" target="_blank" style="color:#8b5cf6">照片' + (idx + 1) + '</a>';
+    }).join(' ') : '无照片';
+
+    var proofHtml = o.payment_proof ? '<br><a href="' + o.payment_proof + '" target="_blank" style="color:green;font-weight:bold">查看凭证</a>' : '';
+
+    var statuses = ['待付款','付款审核中','已付款','打印中','已包装','已发货','已取消'];
+    var optionsHtml = statuses.map(function(s) {
+      return '<option ' + (o.status === s ? 'selected' : '') + '>' + s + '</option>';
+    }).join('');
+
+    return '<tr>' +
+      '<td><b>' + o.id + '</b><br><small>' + new Date(o.created_at).toLocaleString() + '</small></td>' +
+      '<td>' + o.customer_name + '<br>' + o.whatsapp + '<br><small>' + o.address + '</small></td>' +
+      '<td>' + o.photo_size + '<br>' + o.paper_type + '</td>' +
+      '<td>RM' + parseFloat(o.total_amount).toFixed(2) + '</td>' +
+      '<td><span class="status">' + o.status + '</span></td>' +
+      '<td>' + photosHtml + ' ' + proofHtml + '</td>' +
+      '<td><select onchange="setStatus(\'' + o.id + '\', this.value)">' + optionsHtml + '</select></td>' +
+    '</tr>';
+  }).join('');
+
+  b.innerHTML = '<table><tr><th>订单号</th><th>顾客信息</th><th>规格</th><th>金额</th><th>状态</th><th>照片/凭证</th><th>操作</th></tr>' + rows + '</table>';
 }
 
 async function setStatus(orderId, newStatus) {
-  await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+  var client = getSupabase();
+  await client.from('orders').update({ status: newStatus }).eq('id', orderId);
   showToast('状态更新成功');
   renderAdmin();
 }
