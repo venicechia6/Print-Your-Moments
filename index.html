@@ -30,8 +30,10 @@ section{max-width:1180px;margin:auto;padding:45px 24px}
 .title{text-align:center;margin-bottom:30px}
 .title h2{font-size:32px;margin-bottom:8px}.title p{color:#777}
 .products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-.card{background:#fff;border:1px solid #eee;border-radius:18px;padding:22px;box-shadow:0 8px 25px #00000008}
-.card .icon{font-size:32px;margin-bottom:15px}.card h3{margin-bottom:7px}.card p{color:#777;font-size:14px;line-height:1.5}.price{font-weight:800;font-size:20px;margin:15px 0}.smallbtn{width:100%;padding:11px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:700}.smallbtn:hover{background:#f4efff}
+.card{background:#fff;border:1px solid #eee;border-radius:18px;padding:22px;box-shadow:0 8px 25px #00000008;text-align:center}
+.card .icon-img{width:60px;height:60px;object-fit:cover;border-radius:12px;margin-bottom:15px;border:1px solid #eee}
+.card .icon{font-size:32px;margin-bottom:15px}
+.card h3{margin-bottom:7px}.card p{color:#777;font-size:14px;line-height:1.5}.price{font-weight:800;font-size:20px;margin:15px 0}.smallbtn{width:100%;padding:11px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:700}.smallbtn:hover{background:#f4efff}
 
 .order{background:#fff;border:1px solid #eee;border-radius:22px;padding:28px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:30px}
 label{display:block;font-size:13px;font-weight:700;margin:14px 0 7px}
@@ -172,12 +174,13 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <div id="tabPricesView" style="display:none">
   <div class="price-edit-box">
     <h3>新增 / 修改预设规格</h3>
-    <div style="display:grid;grid-template-columns:1fr 0.8fr 0.8fr 1.2fr 0.8fr auto;gap:10px;margin-top:10px;align-items:end">
+    <div style="display:grid;grid-template-columns:1fr 0.8fr 0.8fr 1.2fr 1fr auto;gap:10px;margin-top:10px;align-items:end">
       <div><label style="margin:0">尺寸名称</label><input id="newSizeName" placeholder="例如: 8R"></div>
       <div><label style="margin:0">默认数量</label><input id="newSizeQty" type="number" min="1" value="1" placeholder="1"></div>
       <div><label style="margin:0">预设单价 (RM)</label><input id="newSizePrice" type="number" step="0.01" placeholder="3.50"></div>
       <div><label style="margin:0">描述</label><input id="newSizeDesc" placeholder="10 × 8 inch"></div>
-      <div><label style="margin:0">图标 Emoji</label><input id="newSizeIcon" placeholder="🖼️"></div>
+      <div><label style="margin:0">产品图片</label><input id="newSizeImgFile" type="file" accept="image/*" style="font-size:12px;padding:6px;background:#fff"></div>
+      <input type="hidden" id="newSizeIconHidden" value="">
       <button class="smallbtn" style="background:#8b5cf6;color:#fff;height:43px;border:0" onclick="saveSizeSetting()">保存规格</button>
     </div>
   </div>
@@ -225,8 +228,15 @@ async function initPage() {
 function renderProductCards() {
   var grid = document.getElementById('productGrid');
   grid.innerHTML = sizeList.map(function(s) {
+    var iconHtml = '';
+    if (s.icon && s.icon.startsWith('http')) {
+      iconHtml = '<img src="' + s.icon + '" class="icon-img">';
+    } else {
+      iconHtml = '<div class="icon">' + (s.icon || '🖼️') + '</div>';
+    }
+
     return '<div class="card">' +
-      '<div class="icon">' + (s.icon || '🖼️') + '</div>' +
+      iconHtml +
       '<h3>' + s.name + '</h3>' +
       '<p>' + (s.description || '') + '</p>' +
       '<div class="price">RM' + parseFloat(s.price).toFixed(2) + ' / pcs</div>' +
@@ -590,9 +600,9 @@ function editSizeSetting(name, qty, price, desc, icon) {
   document.getElementById('newSizeQty').value = qty;
   document.getElementById('newSizePrice').value = price;
   document.getElementById('newSizeDesc').value = desc || '';
-  document.getElementById('newSizeIcon').value = icon || '';
+  document.getElementById('newSizeIconHidden').value = icon || '';
   document.getElementById('newSizeName').focus();
-  showToast('已载入 ' + name + '，修改后点击保存即可');
+  showToast('已载入 ' + name + '，可直接修改或上传新图片后保存');
 }
 
 async function saveSizeSetting() {
@@ -600,7 +610,8 @@ async function saveSizeSetting() {
   var qty = parseInt(document.getElementById('newSizeQty').value) || 1;
   var price = parseFloat(document.getElementById('newSizePrice').value);
   var desc = document.getElementById('newSizeDesc').value.trim();
-  var icon = document.getElementById('newSizeIcon').value.trim() || '🖼️';
+  var fileInput = document.getElementById('newSizeImgFile');
+  var iconUrl = document.getElementById('newSizeIconHidden').value.trim() || '🖼️';
 
   if (!name || isNaN(price)) {
     alert('请填写正确的尺寸名称和价格！');
@@ -608,25 +619,42 @@ async function saveSizeSetting() {
   }
 
   var client = getSupabase();
-  var res = await client.from('product_sizes').upsert([{
-    name: name,
-    default_qty: qty,
-    price: price,
-    description: desc,
-    icon: icon
-  }], { onConflict: 'name' });
+  showToast('正在保存规格...');
 
-  if (res.error) {
-    alert('保存失败：' + res.error.message);
-  } else {
+  try {
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      var file = fileInput.files[0];
+      var fileName = 'spec_' + name + '_' + Date.now() + '.jpg';
+      var uploadRes = await client.storage.from(BUCKET_NAME).upload(fileName, file);
+      if (uploadRes.error) throw uploadRes.error;
+
+      var pubRes = client.storage.from(BUCKET_NAME).getPublicUrl(fileName);
+      iconUrl = pubRes.data.publicUrl;
+    }
+
+    var res = await client.from('product_sizes').upsert([{
+      name: name,
+      default_qty: qty,
+      price: price,
+      description: desc,
+      icon: iconUrl
+    }], { onConflict: 'name' });
+
+    if (res.error) throw res.error;
+
     showToast('规格保存成功！');
     document.getElementById('newSizeName').value = '';
     document.getElementById('newSizeQty').value = '1';
     document.getElementById('newSizePrice').value = '';
     document.getElementById('newSizeDesc').value = '';
-    document.getElementById('newSizeIcon').value = '';
+    document.getElementById('newSizeIconHidden').value = '';
+    fileInput.value = '';
+
     await initPage();
     renderPricesAdmin();
+
+  } catch (err) {
+    alert('保存失败：' + (err.message || err));
   }
 }
 
@@ -648,8 +676,15 @@ function renderPricesAdmin() {
     var safeQty = s.default_qty || 1;
     var safePrice = s.price;
 
+    var iconDisplay = '';
+    if (s.icon && s.icon.startsWith('http')) {
+      iconDisplay = '<img src="' + s.icon + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:5px">';
+    } else {
+      iconDisplay = (s.icon || '🖼️') + ' ';
+    }
+
     return '<tr>' +
-      '<td>' + (s.icon || '🖼️') + ' <b>' + s.name + '</b></td>' +
+      '<td>' + iconDisplay + '<b>' + s.name + '</b></td>' +
       '<td>' + safeQty + ' 张</td>' +
       '<td>RM ' + parseFloat(s.price).toFixed(2) + '</td>' +
       '<td>' + (s.description || '') + '</td>' +
@@ -660,7 +695,7 @@ function renderPricesAdmin() {
     '</tr>';
   }).join('');
 
-  b.innerHTML = '<table><tr><th>规格名称</th><th>默认数量</th><th>预设单价</th><th>描述</th><th>操作</th></tr>' + rows + '</table>';
+  b.innerHTML = '<table><tr><th>规格名称与图片</th><th>默认数量</th><th>预设单价</th><th>描述</th><th>操作</th></tr>' + rows + '</table>';
 }
 
 initPage();
