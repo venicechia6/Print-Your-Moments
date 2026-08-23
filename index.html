@@ -54,6 +54,10 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#202024;color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:120}
 .qr-container{text-align:center;margin:15px 0;background:#fbf9ff;padding:15px;border-radius:12px;border:1px dashed #8b5cf6}
 .qr-img{width:220px;height:220px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd;object-fit:contain}
+.admin-tabs{display:flex;gap:10px;margin-bottom:15px;border-bottom:2px solid #eee;padding-bottom:10px}
+.admin-tab{padding:8px 16px;border-radius:8px;background:#f4f4f4;cursor:pointer;font-weight:bold;font-size:13px}
+.admin-tab.active{background:#8b5cf6;color:#fff}
+.price-edit-box{background:#fbf9ff;border:1px solid #e0d5f5;border-radius:12px;padding:15px;margin-bottom:15px}
 </style>
 </head>
 <body>
@@ -75,11 +79,8 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 
 <section id="products">
 <div class="title"><h2>Choose Your Photo Print</h2><p>Pilih saiz foto yang anda mahu</p></div>
-<div class="products">
-  <div class="card"><div class="icon">🖼️</div><h3>4R Photo</h3><p>6 × 4 inch · Sesuai untuk album & frame</p><div class="price">RM0.50 / pcs</div><button class="smallbtn" onclick="choose('4R')">Choose 4R</button></div>
-  <div class="card"><div class="icon">📸</div><h3>5R Photo</h3><p>7 × 5 inch · Lebih besar untuk kenangan</p><div class="price">RM1.00 / pcs</div><button class="smallbtn" onclick="choose('5R')">Choose 5R</button></div>
-  <div class="card"><div class="icon">✨</div><h3>6R Photo</h3><p>9 × 6 inch · Sesuai untuk display</p><div class="price">RM2.00 / pcs</div><button class="smallbtn" onclick="choose('6R')">Choose 6R</button></div>
-  <div class="card"><div class="icon">🎞️</div><h3>Photo Strip</h3><p>Untuk couple, friends & special moments</p><div class="price">RM1.50 / pcs</div><button class="smallbtn" onclick="choose('Photo Strip')">Choose Strip</button></div>
+<div class="products" id="productGrid">
+  <!-- 动态加载产品列表 -->
 </div>
 </section>
 
@@ -88,7 +89,7 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <div class="order">
 <div>
 <label>Photo Size</label>
-<select id="size" onchange="update()"><option value="4R">4R — RM0.50 / pcs</option><option value="5R">5R — RM1.00 / pcs</option><option value="6R">6R — RM2.00 / pcs</option><option value="Photo Strip">Photo Strip — RM1.50 / pcs</option></select>
+<select id="size" onchange="update()"></select>
 <label>Paper Type</label>
 <select id="paper"><option value="Glossy (亮面)">Glossy — 亮面</option><option value="Matte (哑面)">Matte — 哑面</option></select>
 <label>Upload Photos</label>
@@ -148,10 +149,34 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <button class="btn" style="width:100%" onclick="uploadProof()">提交付款证明 / Hantar Resit</button>
 </div></div>
 
-<div class="modal" id="adminModal"><div class="modalbox">
+<div class="modal" id="adminModal"><div class="modalbox" style="max-width:950px">
 <button class="close" onclick="document.getElementById('adminModal').classList.remove('show')">×</button>
-<h2>订单管理后台 (云端同步)</h2><p style="color:#777;margin:7px 0 15px">查看完整邮寄地址及云端专属文件夹。</p>
-<div class="admin" id="adminBody"></div></div></div>
+<h2>订单与规格管理后台</h2>
+<div class="admin-tabs">
+  <div class="admin-tab active" id="tabOrdersBtn" onclick="switchAdminTab('orders')">📦 订单列表</div>
+  <div class="admin-tab" id="tabPricesBtn" onclick="switchAdminTab('prices')">⚙️ 尺寸与价格设置</div>
+</div>
+
+<div id="tabOrdersView">
+  <p style="color:#777;margin:7px 0 15px">查看完整邮寄地址及云端专属文件夹。</p>
+  <div class="admin" id="adminBody"></div>
+</div>
+
+<div id="tabPricesView" style="display:none">
+  <div class="price-edit-box">
+    <h3>新增 / 修改规格尺寸</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;margin-top:10px;align-items:end">
+      <div><label style="margin:0">尺寸名称 (如 4R)</label><input id="newSizeName" placeholder="例如: 8R"></div>
+      <div><label style="margin:0">单价 (RM)</label><input id="newSizePrice" type="number" step="0.01" placeholder="例如: 3.50"></div>
+      <div><label style="margin:0">尺寸描述</label><input id="newSizeDesc" placeholder="例如: 10 × 8 inch"></div>
+      <div><label style="margin:0">图标 Emoji</label><input id="newSizeIcon" placeholder="例如: 🖼️"></div>
+      <button class="smallbtn" style="background:#8b5cf6;color:#fff;height:43px;border:0" onclick="saveSizeSetting()">保存规格</button>
+    </div>
+  </div>
+  <div class="admin" id="pricesBody"></div>
+</div>
+
+</div></div>
 
 <div class="toast" id="toast"></div>
 <div style="text-align:center;padding:10px"><button class="smallbtn" style="max-width:180px" onclick="openAdmin()">⚙️ Admin Demo</button></div>
@@ -170,8 +195,47 @@ function getSupabase() {
   return supabaseClient;
 }
 
-var prices = {"4R": 0.50, "5R": 1.00, "6R": 2.00, "Photo Strip": 1.50};
+var sizeList = [
+  { name: "4R", price: 0.50, desc: "6 × 4 inch · Sesuai untuk album & frame", icon: "🖼️" },
+  { name: "5R", price: 1.00, desc: "7 × 5 inch · Lebih besar untuk kenangan", icon: "📸" },
+  { name: "6R", price: 2.00, desc: "9 × 6 inch · Sesuai untuk display", icon: "✨" },
+  { name: "Photo Strip", price: 1.50, desc: "Untuk couple, friends & special moments", icon: "🎞️" }
+];
+
 var count = 0;
+
+async function loadProductSizes() {
+  var client = getSupabase();
+  if (client) {
+    var res = await client.from('product_sizes').select('*').order('created_at', { ascending: true });
+    if (res.data && res.data.length > 0) {
+      sizeList = res.data;
+    }
+  }
+  renderProductCards();
+  renderSizeSelectOptions();
+  update();
+}
+
+function renderProductCards() {
+  var grid = document.getElementById('productGrid');
+  grid.innerHTML = sizeList.map(function(s) {
+    return '<div class="card">' +
+      '<div class="icon">' + (s.icon || '🖼️') + '</div>' +
+      '<h3>' + s.name + '</h3>' +
+      '<p>' + (s.desc || '') + '</p>' +
+      '<div class="price">RM' + parseFloat(s.price).toFixed(2) + ' / pcs</div>' +
+      '<button class="smallbtn" onclick="choose(\'' + s.name + '\')">Choose ' + s.name + '</button>' +
+    '</div>';
+  }).join('');
+}
+
+function renderSizeSelectOptions() {
+  var sel = document.getElementById('size');
+  sel.innerHTML = sizeList.map(function(s) {
+    return '<option value="' + s.name + '">' + s.name + ' — RM' + parseFloat(s.price).toFixed(2) + ' / pcs</option>';
+  }).join('');
+}
 
 function choose(s) {
   document.getElementById('size').value = s;
@@ -192,9 +256,14 @@ function previewFiles(e) {
   update();
 }
 
+function getUnitPrice(sizeName) {
+  var item = sizeList.find(function(s) { return s.name === sizeName; });
+  return item ? parseFloat(item.price) : 0.5;
+}
+
 function update() {
   var s = document.getElementById('size').value;
-  var p = prices[s] || 0.5;
+  var p = getUnitPrice(s);
   var ship = parseFloat(document.getElementById('shipping').value) || 0;
   document.getElementById('qty').textContent = count + ' pcs';
   document.getElementById('photoTotal').textContent = 'RM' + (count * p).toFixed(2);
@@ -203,7 +272,7 @@ function update() {
 }
 
 function totalAmount() {
-  var p = prices[document.getElementById('size').value] || 0.5;
+  var p = getUnitPrice(document.getElementById('size').value);
   var ship = parseFloat(document.getElementById('shipping').value) || 0;
   return count * p + ship;
 }
@@ -324,6 +393,21 @@ async function uploadProof() {
 function openAdmin() {
   document.getElementById('adminModal').classList.add('show');
   renderAdmin();
+  renderPricesAdmin();
+}
+
+function switchAdminTab(tab) {
+  if (tab === 'orders') {
+    document.getElementById('tabOrdersView').style.display = 'block';
+    document.getElementById('tabPricesView').style.display = 'none';
+    document.getElementById('tabOrdersBtn').classList.add('active');
+    document.getElementById('tabPricesBtn').classList.remove('active');
+  } else {
+    document.getElementById('tabOrdersView').style.display = 'none';
+    document.getElementById('tabPricesView').style.display = 'block';
+    document.getElementById('tabOrdersBtn').classList.remove('active');
+    document.getElementById('tabPricesBtn').classList.add('active');
+  }
 }
 
 function copyToClipboard(text) {
@@ -332,37 +416,11 @@ function copyToClipboard(text) {
   });
 }
 
-async function editOrder(orderId, oldName, oldPhone, oldAddress) {
-  var newName = prompt('修改姓名：', oldName);
-  if (newName === null) return;
-  var newPhone = prompt('修改电话号码：', oldPhone);
-  if (newPhone === null) return;
-  var newAddress = prompt('修改地址：', oldAddress);
-  if (newAddress === null) return;
-
-  var client = getSupabase();
-  await client.from('orders').update({
-    customer_name: newName,
-    whatsapp: newPhone,
-    address: newAddress
-  }).eq('id', orderId);
-
-  showToast('资料已修改！');
-  renderAdmin();
-}
-
-// 专门删除订单的函数
 async function deleteOrder(orderId) {
-  if (!confirm('确定要删除订单 ' + orderId + ' 吗？删除后不可恢复！')) {
-    return;
-  }
+  if (!confirm('确定要删除订单 ' + orderId + ' 吗？删除后不可恢复！')) return;
   var client = getSupabase();
-  
-  // 先删关联照片表
   await client.from('order_photos').delete().eq('order_id', orderId);
-  // 再删主订单表
   var res = await client.from('orders').delete().eq('id', orderId);
-  
   if (res.error) {
     alert('删除失败：' + res.error.message);
   } else {
@@ -376,16 +434,9 @@ async function renderAdmin() {
   var b = document.getElementById('adminBody');
   b.innerHTML = '<p style="color:#777">加载云端数据中...</p>';
 
-  if (!client) {
-    b.innerHTML = '<p style="color:red">Supabase 数据库连接中，请稍后再试...</p>';
-    return;
-  }
+  if (!client) return;
 
-  var res = await client
-    .from('orders')
-    .select('*, order_photos(photo_url)')
-    .order('created_at', { ascending: false });
-
+  var res = await client.from('orders').select('*, order_photos(photo_url)').order('created_at', { ascending: false });
   if (res.error || !res.data || !res.data.length) {
     b.innerHTML = '<p style="color:#777">目前还没有订单。</p>';
     return;
@@ -398,9 +449,7 @@ async function renderAdmin() {
     }).join('') : '无照片';
 
     var proofHtml = o.payment_proof ? '<br><a href="' + o.payment_proof + '" target="_blank" style="color:green;font-weight:bold;display:inline-block;margin-top:5px">🧾 查看付款凭证</a>' : '';
-
     var addressInfo = "姓名: " + o.customer_name + "\n电话: " + o.whatsapp + "\n地址: " + o.address;
-
     var statuses = ['待付款','付款审核中','已付款','打印中','已包装','已发货','已取消'];
     var optionsHtml = statuses.map(function(s) {
       return '<option ' + (o.status === s ? 'selected' : '') + '>' + s + '</option>';
@@ -412,8 +461,7 @@ async function renderAdmin() {
         '<b>姓名：</b>' + o.customer_name + '<br>' +
         '<b>电话：</b>' + o.whatsapp +
         '<div class="address-box"><b>地址：</b>' + o.address + '</div>' +
-        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 一键复制</button> ' +
-        '<button class="copy-btn" style="border-color:#8b5cf6;color:#8b5cf6" onclick="editOrder(\'' + o.id + '\', \'' + o.customer_name.replace(/'/g, "\\'") + '\', \'' + o.whatsapp.replace(/'/g, "\\'") + '\', \'' + o.address.replace(/'/g, "\\'") + '\')">✏️ 修改</button>' +
+        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 一键复制</button>' +
       '</td>' +
       '<td><b>' + o.photo_size + '</b><br><small>' + (o.paper_type || 'Glossy') + '</small></td>' +
       '<td><b>RM' + parseFloat(o.total_amount).toFixed(2) + '</b></td>' +
@@ -442,7 +490,73 @@ async function setStatus(orderId, newStatus) {
   renderAdmin();
 }
 
-update();
+// 规格修改与保存逻辑
+async function saveSizeSetting() {
+  var name = document.getElementById('newSizeName').value.trim();
+  var price = parseFloat(document.getElementById('newSizePrice').value);
+  var desc = document.getElementById('newSizeDesc').value.trim();
+  var icon = document.getElementById('newSizeIcon').value.trim() || '🖼️';
+
+  if (!name || isNaN(price)) {
+    alert('请填写正确的尺寸名称和价格！');
+    return;
+  }
+
+  var client = getSupabase();
+  var res = await client.from('product_sizes').upsert([{
+    name: name,
+    price: price,
+    desc: desc,
+    icon: icon
+  }], { onConflict: 'name' });
+
+  if (res.error) {
+    alert('保存失败：' + res.error.message);
+  } else {
+    showToast('规格保存成功！');
+    document.getElementById('newSizeName').value = '';
+    document.getElementById('newSizePrice').value = '';
+    document.getElementById('newSizeDesc').value = '';
+    document.getElementById('newSizeIcon').value = '';
+    await loadProductSizes();
+    renderPricesAdmin();
+  }
+}
+
+async function deleteSizeSetting(sizeName) {
+  if (!confirm('确定要删除规格 ' + sizeName + ' 吗？')) return;
+  var client = getSupabase();
+  await client.from('product_sizes').delete().eq('name', sizeName);
+  showToast('规格已删除');
+  await loadProductSizes();
+  renderPricesAdmin();
+}
+
+function renderPricesAdmin() {
+  var b = document.getElementById('pricesBody');
+  var rows = sizeList.map(function(s) {
+    return '<tr>' +
+      '<td>' + (s.icon || '🖼️') + ' <b>' + s.name + '</b></td>' +
+      '<td>RM ' + parseFloat(s.price).toFixed(2) + '</td>' +
+      '<td>' + (s.desc || '') + '</td>' +
+      '<td>' +
+        '<button class="copy-btn" onclick="fillPriceEdit(\'' + s.name + '\', ' + s.price + ', \'' + (s.desc||'').replace(/'/g, "\\'") + '\', \'' + (s.icon||'') + '\')">✏️ 编辑</button> ' +
+        '<button class="del-btn" onclick="deleteSizeSetting(\'' + s.name + '\')">🗑️ 删除</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  b.innerHTML = '<table><tr><th>规格名称</th><th>单价</th><th>描述</th><th>操作</th></tr>' + rows + '</table>';
+}
+
+function fillPriceEdit(name, price, desc, icon) {
+  document.getElementById('newSizeName').value = name;
+  document.getElementById('newSizePrice').value = price;
+  document.getElementById('newSizeDesc').value = desc;
+  document.getElementById('newSizeIcon').value = icon;
+}
+
+loadProductSizes();
 </script>
 </body>
 </html>
