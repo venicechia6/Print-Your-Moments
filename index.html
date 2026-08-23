@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Print Your Moments — Photo Printing</title>
+<!-- 引入 Supabase 云端 SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#faf9fc;color:#202024}
+a{text-decoration:none;color:inherit}
+header{height:70px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 7%;position:sticky;top:0;z-index:10}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.5px}
+.logo span{color:#8b5cf6}
+nav{display:flex;gap:25px;font-size:14px;color:#666}
+.cart{background:#202024;color:#fff;padding:10px 16px;border-radius:22px;font-size:13px}
+.hero{max-width:1180px;margin:auto;padding:65px 24px 45px;display:grid;grid-template-columns:1.05fr .95fr;gap:45px;align-items:center}
+.hero h1{font-size:52px;line-height:1.05;letter-spacing:-2px;margin-bottom:18px}
+.hero h1 span{color:#8b5cf6}
+.hero p{font-size:18px;color:#666;line-height:1.7;max-width:520px}
+.btn{display:inline-block;margin-top:26px;background:#202024;color:#fff;padding:15px 23px;border-radius:12px;font-weight:700;border:0;cursor:pointer;text-align:center}
+.hero-card{height:370px;border-radius:28px;background:linear-gradient(135deg,#eee8ff,#fff);padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px;transform:rotate(1deg)}
+.photo{border-radius:18px;background-size:cover;background-position:center;min-height:145px;box-shadow:0 12px 25px #0001}
+.photo:nth-child(1){background-image:url("https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=700&q=80")}
+.photo:nth-child(2){background-image:url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=80")}
+.photo:nth-child(3){background-image:url("https://images.unsplash.com/photo-1504150558240-0b4fd8946624?auto=format&fit=crop&w=700&q=80")}
+.photo:nth-child(4){background-image:url("https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=700&q=80")}
+section{max-width:1180px;margin:auto;padding:45px 24px}
+.title{text-align:center;margin-bottom:30px}
+.title h2{font-size:32px;margin-bottom:8px}.title p{color:#777}
+.products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.card{background:#fff;border:1px solid #eee;border-radius:18px;padding:22px;box-shadow:0 8px 25px #00000008}
+.card .icon{font-size:32px;margin-bottom:15px}.card h3{margin-bottom:7px}.card p{color:#777;font-size:14px;line-height:1.5}.price{font-weight:800;font-size:20px;margin:15px 0}.smallbtn{width:100%;padding:11px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:700}.smallbtn:hover{background:#f4efff}
+.order{background:#fff;border:1px solid #eee;border-radius:22px;padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:30px}
+label{display:block;font-size:13px;font-weight:700;margin:14px 0 7px}
+select,input{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:14px}
+.upload{border:2px dashed #cfc7e9;border-radius:15px;padding:28px;text-align:center;background:#fbf9ff;cursor:pointer}
+.upload input{display:none}.upload strong{display:block;margin-bottom:5px}.upload span{font-size:13px;color:#777}
+.preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.thumb{width:64px;height:64px;border-radius:8px;object-fit:cover}
+.total{margin-top:20px;padding:18px;background:#f7f5fa;border-radius:12px}.row{display:flex;justify-content:space-between;margin:7px 0}.grand{font-size:20px;font-weight:800;padding-top:10px;border-top:1px solid #ddd}
+footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-top:30px}footer p{color:#aaa;font-size:13px;margin-top:7px}
+@media(max-width:800px){nav{display:none}.hero{grid-template-columns:1fr;padding-top:40px}.hero h1{font-size:40px}.hero-card{height:300px}.products{grid-template-columns:1fr 1fr}.order{grid-template-columns:1fr}}
+@media(max-width:480px){.products{grid-template-columns:1fr}.hero-card{height:260px}.photo{min-height:100px}}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:99;align-items:center;justify-content:center;padding:18px}
+.modal.show{display:flex}.modalbox{background:#fff;max-width:600px;width:100%;max-height:90vh;overflow:auto;border-radius:22px;padding:25px}
+.close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px;cursor:pointer}
+.ordercode{background:#f6f2ff;border-radius:12px;padding:14px;margin:15px 0;font-weight:800;text-align:center}
+.status{display:inline-block;padding:6px 10px;border-radius:20px;background:#fff3cd;font-size:12px}
+.admin{margin-top:18px;overflow:auto}.admin table{width:100%;border-collapse:collapse;font-size:13px}.admin th,.admin td{padding:10px;border-bottom:1px solid #eee;text-align:left}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#202024;color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:120}
+.qr-container{text-align:center;margin:15px 0;background:#fbf9ff;padding:15px;border-radius:12px;border:1px dashed #8b5cf6}
+.qr-img{width:180px;height:180px;margin:10px auto;display:block;border-radius:8px;border:1px solid #ddd}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Print <span>Your Moments</span></div>
+  <nav><a href="#products">Photo Print</a><a href="#order">Order</a><a href="#how">How It Works</a></nav>
+  <a class="cart" href="#order">🛒 Order</a>
+</header>
+
+<main>
+<section class="hero">
+  <div>
+    <h1>Print your <span>moments.</span></h1>
+    <p>Upload your favourite photos, choose your size and paper, then place your order. Simple, fast and made for your memories.</p>
+    <a class="btn" href="#order">📷 Mula Cetak Sekarang</a>
+  </div>
+  <div class="hero-card"><div class="photo"></div><div class="photo"></div><div class="photo"></div><div class="photo"></div></div>
+</section>
+
+<section id="products">
+<div class="title"><h2>Choose Your Photo Print</h2><p>Pilih saiz foto yang anda mahu</p></div>
+<div class="products">
+  <div class="card"><div class="icon">🖼️</div><h3>4R Photo</h3><p>6 × 4 inch · Sesuai untuk album & frame</p><div class="price">RM0.50 / pcs</div><button class="smallbtn" onclick="choose('4R')">Choose 4R</button></div>
+  <div class="card"><div class="icon">📸</div><h3>5R Photo</h3><p>7 × 5 inch · Lebih besar untuk kenangan</p><div class="price">RM1.00 / pcs</div><button class="smallbtn" onclick="choose('5R')">Choose 5R</button></div>
+  <div class="card"><div class="icon">✨</div><h3>6R Photo</h3><p>9 × 6 inch · Sesuai untuk display</p><div class="price">RM2.00 / pcs</div><button class="smallbtn" onclick="choose('6R')">Choose 6R</button></div>
+  <div class="card"><div class="icon">🎞️</div><h3>Photo Strip</h3><p>Untuk couple, friends & special moments</p><div class="price">RM1.50 / pcs</div><button class="smallbtn" onclick="choose('Photo Strip')">Choose Strip</button></div>
+</div>
+</section>
+
+<section id="order">
+<div class="title"><h2>Place Your Order</h2><p>Upload your photos and let us do the rest.</p></div>
+<div class="order">
+<div>
+<label>Photo Size</label>
+<select id="size" onchange="update()"><option value="4R">4R — RM0.50 / pcs</option><option value="5R">5R — RM1.00 / pcs</option><option value="6R">6R — RM2.00 / pcs</option><option value="Photo Strip">Photo Strip — RM1.50 / pcs</option></select>
+<label>Paper Type</label>
+<select><option>Glossy — 亮面</option><option>Matte — 哑面</option></select>
+<label>Upload Photos</label>
+<div class="upload" onclick="document.getElementById('files').click()">
+<strong>＋ Add Photos</strong><span>从手机选择照片，可一次上传多张</span>
+<input id="files" type="file" accept="image/*" multiple onchange="previewFiles(event)">
+</div>
+<div class="preview" id="preview"></div>
+</div>
+<div>
+<label>Your Name</label><input placeholder="Nama anda">
+<label>WhatsApp Number</label><input placeholder="01X-XXXXXXX">
+<label>Delivery Address</label><input placeholder="Alamat penghantaran">
+<label>Shipping Option (Courier Service)</label>
+<select id="shipping" onchange="update()">
+  <option value="6.00">J&T Express (Semenanjung) — RM6.00</option>
+  <option value="5.00">Pos Laju — RM5.00</option>
+  <option value="6.50">Ninja Van — RM6.50</option>
+  <option value="12.00">Sabah & Sarawak (Pos Laju) — RM12.00</option>
+  <option value="0">Self Pickup — RM0.00</option>
+</select>
+<div class="total">
+<div class="row"><span>Photos</span><span id="qty">0 pcs</span></div>
+<div class="row"><span>Photo Total</span><span id="photoTotal">RM0.00</span></div>
+<div class="row"><span>Shipping</span><span id="shipTotal">RM6.00</span></div>
+<div class="row grand"><span>Total</span><span id="grand">RM6.00</span></div>
+</div>
+<button class="btn" style="width:100%" onclick="placeOrder()">PROCEED TO PAYMENT</button>
+</div>
+</div>
+</section>
+
+<section id="how">
+<div class="title"><h2>How It Works</h2><p>3 langkah sahaja</p></div>
+<div class="products">
+<div class="card"><div class="icon">1️⃣</div><h3>Upload</h3><p>Pilih dan upload gambar dari telefon anda.</p></div>
+<div class="card"><div class="icon">2️⃣</div><h3>Order & Pay</h3><p>Pilih kurier, scan DuitNow QR dan muat naik resit.</p></div>
+<div class="card"><div class="icon">3️⃣</div><h3>Print & Ship</h3><p>Kami print, pack dan hantar terus ke pintu anda.</p></div>
+</div>
+</section>
+</main>
+
+<div class="modal" id="successModal"><div class="modalbox">
+<button class="close" onclick="closeModal()">×</button>
+<h2 style="text-align:center">订单已建立 🎉</h2>
+<p style="color:#777;margin-top:5px;text-align:center">Sila scan DuitNow QR di bawah untuk membuat pembayaran.</p>
+<div class="ordercode" id="orderCode"></div>
+<div id="orderSummary" style="line-height:1.8;text-align:center"></div>
+
+<div class="qr-container">
+  <strong>Scan & Pay via DuitNow QR</strong>
+  <p style="font-size:12px;color:#666">Sesuai untuk TNG eWallet, MAE, Public Bank, CIMB, Maybank dll.</p>
+  <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=DuitNowPAYMENT" alt="DuitNow QR">
+  <p style="font-size:13px;font-weight:bold;color:#8b5cf6">PRINT YOUR MOMENTS ENTERPRISE</p>
+</div>
+
+<label>上传付款证明 / Muat Naik Resit Pembayaran</label>
+<input id="proof" type="file" accept="image/*" style="margin-bottom:12px">
+<button class="btn" style="width:100%" onclick="uploadProof()">提交付款证明 / Hantar Resit</button>
+</div></div>
+
+<div class="modal" id="adminModal"><div class="modalbox">
+<button class="close" onclick="document.getElementById('adminModal').classList.remove('show')">×</button>
+<h2>订单管理后台 (云端同步)</h2><p style="color:#777;margin:7px 0 15px">实时读取 Supabase 云数据库订单信息。</p>
+<div class="admin" id="adminBody"></div></div></div>
+
+<div class="toast" id="toast"></div>
+<div style="text-align:center;padding:10px"><button class="smallbtn" style="max-width:180px" onclick="openAdmin()">⚙️ Admin Demo</button></div>
+<footer><strong>Print Your Moments</strong><p>Cetak kenangan, simpan selamanya. ❤️</p></footer>
+
+<script>
+const SUPABASE_URL = "https://exdvuezgterujdtqvqql.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-kLzjGxi1otHpgKyPkeWuA_lyrNxNPM";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const prices = {"4R": 0.50, "5R": 1.00, "6R": 2.00, "Photo Strip": 1.50};
+let count = 0;
+
+function choose(s) {
+  document.getElementById('size').value = s;
+  document.getElementById('order').scrollIntoView({behavior: 'smooth'});
+  update();
+}
+
+function previewFiles(e) {
+  const box = document.getElementById('preview');
+  box.innerHTML = '';
+  count = e.target.files.length;
+  [...e.target.files].forEach(f => {
+    const img = document.createElement('img');
+    img.className = 'thumb';
+    img.src = URL.createObjectURL(f);
+    box.appendChild(img);
+  });
+  update();
+}
+
+function update() {
+  const s = document.getElementById('size').value;
+  const p = prices[s];
+  const ship = parseFloat(document.getElementById('shipping').value);
+  document.getElementById('qty').textContent = count + ' pcs';
+  document.getElementById('photoTotal').textContent = 'RM' + (count * p).toFixed(2);
+  document.getElementById('shipTotal').textContent = 'RM' + ship.toFixed(2);
+  document.getElementById('grand').textContent = 'RM' + (count * p + ship).toFixed(2);
+}
+
+function totalAmount() {
+  return count * prices[document.getElementById('size').value] + parseFloat(document.getElementById('shipping').value);
+}
+
+function showToast(t) {
+  const x = document.getElementById('toast');
+  x.textContent = t;
+  x.style.display = 'block';
+  setTimeout(() => x.style.display = 'none', 2500);
+}
+
+function closeModal() {
+  document.getElementById('successModal').classList.remove('show');
+}
+
+async function placeOrder() {
+  const fileInput = document.getElementById('files');
+  if (count === 0 || !fileInput.files.length) {
+    showToast('请先上传照片 / Sila upload foto dahulu.');
+    return;
+  }
+
+  const ins = document.querySelectorAll('#order input');
+  const name = ins[0].value.trim();
+  const phone = ins[1].value.trim();
+  const address = ins[2].value.trim();
+
+  if (!name || !phone || !address) {
+    showToast('请填写姓名、WhatsApp 和地址');
+    return;
+  }
+
+  showToast('正在提交订单及上传照片...');
+
+  try {
+    const orderId = 'PYM' + String(Date.now()).slice(-6);
+
+    const uploadedUrls = [];
+    for (let file of fileInput.files) {
+      const fileName = `${orderId}_${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage.from('photos').upload(fileName, file);
+      if (error) throw error;
+
+      const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(fileName);
+      uploadedUrls.push(publicUrlData.publicUrl);
+    }
+
+    const { error: orderError } = await supabase.from('orders').insert([{
+      id: orderId,
+      customer_name: name,
+      whatsapp: phone,
+      address: address,
+      photo_size: document.getElementById('size').value,
+      paper_type: document.querySelectorAll('#order select')[1].value,
+      total_amount: totalAmount(),
+      status: '待付款'
+    }]);
+
+    if (orderError) throw orderError;
+
+    const photoRecords = uploadedUrls.map(url => ({
+      order_id: orderId,
+      photo_url: url
+    }));
+    const { error: photoError } = await supabase.from('order_photos').insert(photoRecords);
+    if (photoError) throw photoError;
+
+    window.currentOrderId = orderId;
+
+    document.getElementById('orderCode').textContent = 'ORDER ID: ' + orderId;
+    document.getElementById('orderSummary').innerHTML = 
+      '规格: <b>' + document.getElementById('size').value + '</b> × ' + count + ' pcs<br>' +
+      '<strong>Jumlah Perlu Dibayar: RM' + totalAmount().toFixed(2) + '</strong>';
+    document.getElementById('successModal').classList.add('show');
+
+  } catch (err) {
+    alert('提交失败：' + err.message);
+  }
+}
+
+async function uploadProof() {
+  const f = document.getElementById('proof').files[0];
+  if (!f) {
+    showToast('请选择付款凭证 / Sila pilih resit');
+    return;
+  }
+
+  try {
+    showToast('正在上传凭证...');
+    const fileName = `proof_${window.currentOrderId}_${Date.now()}_${f.name}`;
+    const { error } = await supabase.storage.from('photos').upload(fileName, f);
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(fileName);
+
+    await supabase.from('orders').update({
+      payment_proof: publicUrlData.publicUrl,
+      status: '付款审核中'
+    }).eq('id', window.currentOrderId);
+
+    showToast('付款证明已提交！Terima kasih.');
+    closeModal();
+  } catch (err) {
+    alert('上传凭证失败：' + err.message);
+  }
+}
+
+function openAdmin() {
+  document.getElementById('adminModal').classList.add('show');
+  renderAdmin();
+}
+
+async function renderAdmin() {
+  const b = document.getElementById('adminBody');
+  b.innerHTML = '<p style="color:#777">加载云端数据中...</p>';
+
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('*, order_photos(photo_url)')
+    .order('created_at', { ascending: false });
+
+  if (error || !orders || !orders.length) {
+    b.innerHTML = '<p style="color:#777">目前还没有订单。</p>';
+    return;
+  }
+
+  b.innerHTML = '<table><tr><th>订单号</th><th>顾客信息</th><th>规格</th><th>金额</th><th>状态</th><th>照片/凭证</th><th>操作</th></tr>' +
+  orders.map(o => {
+    const photosHtml = o.order_photos ? o.order_photos.map((p, idx) => `<a href="${p.photo_url}" target="_blank" style="color:#8b5cf6">照片${idx+1}</a>`).join(' ') : '无照片';
+    const proofHtml = o.payment_proof ? `<br><a href="${o.payment_proof}" target="_blank" style="color:green;font-weight:bold">查看凭证</a>` : '';
+    
+    return `<tr>
+      <td><b>${o.id}</b><br><small>${new Date(o.created_at).toLocaleString()}</small></td>
+      <td>${o.customer_name}<br>${o.whatsapp}<br><small>${o.address}</small></td>
+      <td>${o.photo_size}<br>${o.paper_type}</td>
+      <td>RM${parseFloat(o.total_amount).toFixed(2)}</td>
+      <td><span class="status">${o.status}</span></td>
+      <td>${photosHtml} ${proofHtml}</td>
+      <td>
+        <select onchange="setStatus('${o.id}', this.value)">
+          ${['待付款','付款审核中','已付款','打印中','已包装','已发货','已取消'].map(s => 
+            `<option ${o.status === s ? 'selected' : ''}>${s}</option>`
+          ).join('')}
+        </select>
+      </td>
+    </tr>`;
+  }).join('') + '</table>';
+}
+
+async function setStatus(orderId, newStatus) {
+  await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+  showToast('状态更新成功');
+  renderAdmin();
+}
+
+update();
+</script>
+</body>
+</html>
