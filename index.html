@@ -97,9 +97,9 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 <div class="preview" id="preview"></div>
 </div>
 <div>
-<label>Your Name</label><input id="custName" placeholder="Nama anda">
-<label>WhatsApp Number</label><input id="custPhone" placeholder="01X-XXXXXXX">
-<label>Delivery Address</label><input id="custAddress" placeholder="Alamat penghantaran penuh">
+<label>Your Name</label><input id="custName" type="text" placeholder="Nama anda">
+<label>WhatsApp Number</label><input id="custPhone" type="text" placeholder="01X-XXXXXXX">
+<label>Delivery Address</label><input id="custAddress" type="text" placeholder="Alamat penghantaran penuh">
 <label>Shipping Option (Courier Service)</label>
 <select id="shipping" onchange="update()">
   <option value="8.00">GDEX Express (Semenanjung) — RM8.00</option>
@@ -225,6 +225,7 @@ async function placeOrder() {
     return;
   }
 
+  // 严格精确精准获取各个输入框的值
   var name = document.getElementById('custName').value.trim();
   var phone = document.getElementById('custPhone').value.trim();
   var address = document.getElementById('custAddress').value.trim();
@@ -275,6 +276,7 @@ async function placeOrder() {
     if (photoRes.error) throw photoRes.error;
 
     window.currentOrderId = orderId;
+    window.currentCustName = name;
 
     document.getElementById('orderCode').textContent = 'ORDER ID: ' + orderId;
     document.getElementById('orderSummary').innerHTML = 
@@ -297,7 +299,7 @@ async function uploadProof() {
 
   try {
     showToast('正在上传凭证...');
-    var name = document.getElementById('custName').value.trim();
+    var name = window.currentCustName || 'Customer';
     var cleanName = name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_');
     var fileName = cleanName + '_' + window.currentOrderId + '/receipt_' + Date.now() + '.jpg';
     
@@ -325,7 +327,7 @@ function openAdmin() {
 
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(function() {
-    showToast('已复制到剪贴板！');
+    showToast('已复制完整邮寄资料！');
   });
 }
 
@@ -366,10 +368,11 @@ async function renderAdmin() {
 
     return '<tr>' +
       '<td><b>' + o.id + '</b><br><small style="color:#888">' + new Date(o.created_at).toLocaleString() + '</small></td>' +
-      '<td style="min-width:200px">' +
-        '<b>' + o.customer_name + '</b> (' + o.whatsapp + ')' +
-        '<div class="address-box">' + o.address + '</div>' +
-        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 复制完整邮寄资料</button>' +
+      '<td style="min-width:220px">' +
+        '<b>姓名：</b>' + o.customer_name + '<br>' +
+        '<b>电话：</b>' + o.whatsapp +
+        '<div class="address-box"><b>地址：</b>' + o.address + '</div>' +
+        '<button class="copy-btn" onclick="copyToClipboard(\'' + addressInfo.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\')">📋 一键复制邮寄资料</button>' +
       '</td>' +
       '<td><b>' + o.photo_size + '</b><br><small>' + (o.paper_type || 'Glossy') + '</small></td>' +
       '<td><b>RM' + parseFloat(o.total_amount).toFixed(2) + '</b></td>' +
