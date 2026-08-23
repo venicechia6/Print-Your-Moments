@@ -35,6 +35,17 @@ section{max-width:1180px;margin:auto;padding:45px 24px}
 .order{background:#fff;border:1px solid #eee;border-radius:22px;padding:28px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:30px}
 label{display:block;font-size:13px;font-weight:700;margin:14px 0 7px}
 select,input{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:14px}
+
+/* 隐藏 number 类型输入框的微调箭头 */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .item-row{display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr 35px;gap:8px;align-items:center;margin-bottom:10px;background:#fbf9ff;padding:10px;border-radius:10px;border:1px solid #eee}
 .item-row select, .item-row input{padding:8px;font-size:13px}
 .btn-del-item{background:#ff4d4f;color:#fff;border:0;width:30px;height:30px;border-radius:6px;cursor:pointer;font-weight:bold}
@@ -267,10 +278,11 @@ function addItemRow(defaultSize) {
     initialQty = matched.default_qty || 1;
   }
 
+  // 🔽 单价输入框添加 readonly 锁定，不允许随便改，并去除微调箭头
   div.innerHTML = 
     '<div><select onchange="onSizeSelectChange(this)">' + optionsHtml + '</select></div>' +
     '<div><input type="text" class="custom-name" placeholder="规格名称" value="' + (defaultSize||'4R') + '"></div>' +
-    '<div><input type="number" class="item-price" step="0.01" value="' + parseFloat(initialPrice).toFixed(2) + '" placeholder="单价" onchange="calculateGrandTotal()"></div>' +
+    '<div><input type="number" class="item-price" step="0.01" value="' + parseFloat(initialPrice).toFixed(2) + '" placeholder="单价" readonly style="background:#f4f4f6;cursor:not-allowed;"></div>' +
     '<div><input type="number" class="item-qty" min="1" value="' + initialQty + '" placeholder="数量" onchange="calculateGrandTotal()"></div>' +
     '<div><button class="btn-del-item" onclick="removeItemRow(this)">×</button></div>';
 
@@ -288,10 +300,16 @@ function onSizeSelectChange(selectElem) {
   if (selectElem.value === "Custom (自定义)") {
     nameInput.value = "";
     priceInput.value = "1.00";
+    priceInput.removeAttribute('readonly'); // 自定义规格允许自定义价格
+    priceInput.style.background = "#fff";
+    priceInput.style.cursor = "text";
     qtyInput.value = "1";
   } else {
     nameInput.value = selectElem.value;
     priceInput.value = parseFloat(selectedOption.getAttribute('data-price') || 0).toFixed(2);
+    priceInput.setAttribute('readonly', 'readonly');
+    priceInput.style.background = "#f4f4f6";
+    priceInput.style.cursor = "not-allowed";
     qtyInput.value = selectedOption.getAttribute('data-qty') || 1;
   }
   calculateGrandTotal();
@@ -496,10 +514,8 @@ async function uploadProof() {
   }
 }
 
-/* 🔒 带密码保护的后台打开函数 */
 function openAdmin() {
   var password = prompt("请输入管理员密码以打开后台：");
-  // 💡 你可以在下面把 "123456" 替换为你想要的任意专属密码
   if (password === "123456") {
     document.getElementById('adminModal').classList.add('show');
     renderAdmin();
