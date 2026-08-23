@@ -60,7 +60,106 @@ footer{background:#202024;color:#fff;text-align:center;padding:35px 20px;margin-
 .price-edit-box{background:#fbf9ff;border:1px solid #e0d5f5;border-radius:12px;padding:15px;margin-bottom:15px}
 </style>
 </head>
-<body>
+<body>/**
+ * Prevent-Crash.js - 高并发防卡死 & 防重复提交插件
+ * 作用：自动拦截重复点击，防止用户频繁触发请求导致网站/服务器卡死
+ */
+(function () {
+  'use strict';
+
+  // 默认配置
+  const CONFIG = {
+    coolDownMs: 2000, // 提交后的强制冷却时间（毫秒）
+    submittingText: '处理中...', // 点击后按钮显示的文字
+  };
+
+  // 全局提交锁集合（使用 WeakSet 存储已经处于提交状态的元素）
+  const submittingElements = new WeakSet();
+
+  /**
+   * 锁定按钮/表单，阻止二次提交
+   */
+  function lockElement(element) {
+    if (submittingElements.has(element)) {
+      return false; // 已被锁定，拦截操作
+    }
+
+    submittingElements.add(element);
+
+    // 如果是按钮或输入框，进行禁用和变色处理
+    if (element.tagName === 'BUTTON' || element.tagName === 'INPUT') {
+      element.dataset.oldText = element.innerText || element.value;
+      element.disabled = true;
+      element.style.opacity = '0.6';
+      element.style.cursor = 'not-allowed';
+
+      if (element.tagName === 'BUTTON') {
+        element.innerText = CONFIG.submittingText;
+      } else if (element.tagName === 'INPUT' && element.type === 'submit') {
+        element.value = CONFIG.submittingText;
+      }
+    }
+
+    // 冷却时间结束后解除锁定
+    setTimeout(() => {
+      unlockElement(element);
+    }, CONFIG.coolDownMs);
+
+    return true;
+  }
+
+  /**
+   * 解锁按钮/表单
+   */
+  function unlockElement(element) {
+    submittingElements.delete(element);
+
+    if (element.tagName === 'BUTTON' || element.tagName === 'INPUT') {
+      element.disabled = false;
+      element.style.opacity = '1';
+      element.style.cursor = 'pointer';
+
+      if (element.dataset.oldText) {
+        if (element.tagName === 'BUTTON') {
+          element.innerText = element.dataset.oldText;
+        } else if (element.tagName === 'INPUT' && element.type === 'submit') {
+          element.value = element.dataset.oldText;
+        }
+      }
+    }
+  }
+
+  // 1. 全局监听表单提交事件（Form Submit）
+  document.addEventListener('submit', function (event) {
+    const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+
+    // 优先锁定提交按钮，其次锁定表单本身
+    const targetToLock = submitBtn || form;
+
+    if (!lockElement(targetToLock)) {
+      // 如果已被锁定，阻止重复提交
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      console.warn('[PreventCrash] 阻止了一次重复提交！');
+    }
+  }, true);
+
+  // 2. 全局监听普通按钮点击事件（Button Click）
+  document.addEventListener('click', function (event) {
+    const btn = event.target.closest('button, input[type="button"], input[type="submit"]');
+    if (!btn) return;
+
+    // 如果按钮不在表单内，或者是有 onclick 事件的独立按钮
+    if (!btn.form && !lockElement(btn)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      console.warn('[PreventCrash] 阻止了一次频繁点击！');
+    }
+  }, true);
+
+  console.log('✅ 防卡死（Prevent-Crash）保护脚本已就绪');
+})();
 <header>
   <div class="logo">Print <span>Your Moments</span></div>
   <nav><a href="#products">Photo Print</a><a href="#order">Order</a><a href="#how">How It Works</a></nav>
